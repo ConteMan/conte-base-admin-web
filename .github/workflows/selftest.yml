@@ -1,0 +1,25 @@
+name: selftest
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  selftest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Run selftest
+        run: ./scripts/selftest.sh

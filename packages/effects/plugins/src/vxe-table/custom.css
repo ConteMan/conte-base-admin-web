@@ -1,0 +1,36 @@
+.vben-vxe-grid .vxe-grid--form-wrapper {
+  padding-top: 0.5rem;
+  padding-bottom: 0;
+}
+
+.vben-vxe-grid.vben-vxe-grid--search-visible .vxe-grid--form-wrapper {
+  padding-bottom: 0.5rem;
+  box-shadow: inset 0 -1px 0 hsl(var(--border) / 80%);
+}
+
+.vben-vxe-grid .vxe-grid--toolbar-wrapper {
+  padding-top: 0;
+  padding-bottom: 0.5rem;
+}
+
+.vben-vxe-grid .vxe-toolbar .vxe-button:not(.is--circle) i {
+  margin-right: 0.35rem;
+  line-height: 1;
+}
+
+.vben-vxe-grid .vxe-toolbar .vxe-button:not(.is--circle) {
+  display: inline-flex;
+  align-items: center;
+}
+
+.vben-vxe-grid .vxe-toolbar .vxe-button:not(.is--circle) .vxe-button--content,
+.vben-vxe-grid .vxe-toolbar .vxe-button--item-wrapper,
+.vben-vxe-grid .vxe-toolbar .vxe-tool--item-wrapper,
+.vben-vxe-grid .vxe-toolbar .vxe-button--prefix-wrapper,
+.vben-vxe-grid .vxe-toolbar .vxe-button--suffix-wrapper,
+.vben-vxe-grid .vxe-toolbar .vxe-tool--prefix-wrapper,
+.vben-vxe-grid .vxe-toolbar .vxe-tool--suffix-wrapper {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
