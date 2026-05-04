@@ -8,6 +8,7 @@ import { startProgress, stopProgress } from '@vben/utils';
 import { accessRoutes, coreRouteNames } from '#/router/routes';
 import { useAuthStore } from '#/store';
 import { getAccessCodesApi } from '#/api';
+import { isUnauthorizedRequestError } from '#/api/request';
 
 import { generateAccess } from './access';
 import { isPathAccessibleByRoutes } from './path-matcher';
@@ -108,58 +109,66 @@ function setupAccessGuard(router: Router) {
       return true;
     }
 
-    // 生成路由表
-    // 当前登录用户拥有的角色标识列表
-    const userInfo = userStore.userInfo || (await authStore.fetchUserInfo());
-    const userRoles = userInfo.roles ?? [];
+    try {
+      // 生成路由表
+      // 当前登录用户拥有的角色标识列表
+      const userInfo = userStore.userInfo || (await authStore.fetchUserInfo());
+      const userRoles = userInfo.roles ?? [];
 
-    // 后端模式下按钮权限码依赖该数据
-    if (!accessStore.accessCodes.length) {
-      try {
-        const accessCodes = await getAccessCodesApi();
-        accessStore.setAccessCodes(accessCodes || []);
-      } catch {
-        accessStore.setAccessCodes([]);
+      // 后端模式下按钮权限码依赖该数据
+      if (!accessStore.accessCodes.length) {
+        try {
+          const accessCodes = await getAccessCodesApi();
+          accessStore.setAccessCodes(accessCodes || []);
+        } catch {
+          accessStore.setAccessCodes([]);
+        }
       }
-    }
 
-    // 生成菜单和路由
-    const { accessibleMenus, accessibleRoutes } = await generateAccess({
-      roles: userRoles,
-      router,
-      // 则会在菜单中显示，但是访问会被重定向到403
-      routes: accessRoutes,
-    });
+      // 生成菜单和路由
+      const { accessibleMenus, accessibleRoutes } = await generateAccess({
+        roles: userRoles,
+        router,
+        // 则会在菜单中显示，但是访问会被重定向到403
+        routes: accessRoutes,
+      });
 
-    // 保存菜单信息和路由信息
-    accessStore.setAccessMenus(accessibleMenus);
-    accessStore.setAccessRoutes(accessibleRoutes);
-    accessStore.setIsAccessChecked(true);
+      // 保存菜单信息和路由信息
+      accessStore.setAccessMenus(accessibleMenus);
+      accessStore.setAccessRoutes(accessibleRoutes);
+      accessStore.setIsAccessChecked(true);
 
-    // 确定目标落地路径
-    let redirectPath = (from.query.redirect ??
-      (to.path === preferences.app.defaultHomePath
-        ? userInfo.homePath || preferences.app.defaultHomePath
-        : to.fullPath)) as string;
+      // 确定目标落地路径
+      let redirectPath = (from.query.redirect ??
+        (to.path === preferences.app.defaultHomePath
+          ? userInfo.homePath || preferences.app.defaultHomePath
+          : to.fullPath)) as string;
 
-    const finalPath = decodeURIComponent(redirectPath);
+      const finalPath = decodeURIComponent(redirectPath);
 
-    // 如果目标路径不在当前用户可访问的路由中，则跳转到第一个有权限的菜单
-    if (
-      finalPath &&
-      !isPathAccessibleByRoutes(finalPath, accessibleRoutes, router)
-    ) {
-      const fallback = findFirstValidMenuPath(accessibleMenus);
+      // 如果目标路径不在当前用户可访问的路由中，则跳转到第一个有权限的菜单
+      if (
+        finalPath &&
+        !isPathAccessibleByRoutes(finalPath, accessibleRoutes, router)
+      ) {
+        const fallback = findFirstValidMenuPath(accessibleMenus);
+        return {
+          path: fallback || preferences.app.defaultHomePath,
+          replace: true,
+        };
+      }
+
       return {
-        path: fallback || preferences.app.defaultHomePath,
+        ...router.resolve(finalPath),
         replace: true,
       };
+    } catch (error) {
+      if (isUnauthorizedRequestError(error)) {
+        await authStore.logout(false);
+        return false;
+      }
+      throw error;
     }
-
-    return {
-      ...router.resolve(finalPath),
-      replace: true,
-    };
   });
 }
 
