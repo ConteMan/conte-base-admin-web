@@ -2,6 +2,8 @@ import { useAccessStore } from '@vben/stores';
 
 import { message } from 'ant-design-vue';
 
+import { $t } from '#/locales';
+
 interface RequestConfig {
   data?: unknown;
   headers?: HeadersInit;
@@ -21,6 +23,24 @@ interface ErrorEnvelope {
   };
   message?: string;
   success: false;
+}
+
+class HttpRequestError extends Error {
+  code?: string;
+  status: number;
+
+  constructor(
+    messageText: string,
+    options: {
+      code?: string;
+      status: number;
+    },
+  ) {
+    super(messageText);
+    this.name = 'HttpRequestError';
+    this.code = options.code;
+    this.status = options.status;
+  }
 }
 
 function buildURL(baseURL: string, url: string, params?: RequestConfig['params']) {
@@ -43,15 +63,17 @@ function getLocale() {
   return localStorage.getItem('conte-base-admin-locale') || 'zh-CN';
 }
 
-function getAuthHeader() {
+function getAccessToken() {
   try {
     const accessStore = useAccessStore();
-    return accessStore.accessToken
-      ? { Authorization: `Bearer ${accessStore.accessToken}` }
-      : {};
+    return accessStore.accessToken;
   } catch {
-    return {};
+    return undefined;
   }
+}
+
+function getAuthHeader(accessToken?: null | string) {
+  return accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
 }
 
 async function parseJSON(response: Response) {
@@ -71,13 +93,37 @@ function unwrapResponse<T>(payload: ErrorEnvelope | SuccessEnvelope<T>): T {
   );
 }
 
+function resolveErrorMessage(payload: ErrorEnvelope, status: number) {
+  switch (payload.error?.code) {
+    case 'ADMIN.AUTH.INVALID_CREDENTIALS': {
+      return $t('authentication.invalidCredentials');
+    }
+    case 'ADMIN.AUTH.INVALID_TICKET': {
+      return $t('authentication.invalidTicket');
+    }
+    case 'ADMIN.AUTH.INVALID_TOTP': {
+      return $t('authentication.invalidTotp');
+    }
+    default: {
+      return payload.error?.message || payload.message || `请求失败(${status})`;
+    }
+  }
+}
+
+function isUnauthorizedRequestError(error: unknown) {
+  return error instanceof HttpRequestError && error.status === 401;
+}
+
 async function request<T>(url: string, config: RequestConfig = {}) {
   const method = config.method || 'GET';
   const headers = new Headers(config.headers);
+  const accessToken = getAccessToken();
 
   headers.set('Accept-Language', getLocale());
   headers.set('Accept', 'application/json');
-  Object.entries(getAuthHeader()).forEach(([key, value]) => headers.set(key, value));
+  Object.entries(getAuthHeader(accessToken)).forEach(([key, value]) =>
+    headers.set(key, value),
+  );
 
   let body: BodyInit | undefined;
   if (config.data !== undefined) {
@@ -91,14 +137,22 @@ async function request<T>(url: string, config: RequestConfig = {}) {
     method,
   });
 
-  const payload = (await parseJSON(response)) as ErrorEnvelope | SuccessEnvelope<T>;
+  const payload = (await parseJSON(response)) as
+    | ErrorEnvelope
+    | SuccessEnvelope<T>;
   if (!response.ok) {
-    const errorMessage =
-      (payload as ErrorEnvelope).error?.message ||
-      (payload as ErrorEnvelope).message ||
-      `请求失败(${response.status})`;
-    message.error(errorMessage);
-    throw new Error(errorMessage);
+    const errorPayload = payload as ErrorEnvelope;
+    const errorMessage = resolveErrorMessage(errorPayload, response.status);
+    const errorCode = errorPayload.error?.code;
+
+    if (response.status !== 401 || !accessToken) {
+      message.error(errorMessage);
+    }
+
+    throw new HttpRequestError(errorMessage, {
+      code: errorCode,
+      status: response.status,
+    });
   }
 
   return unwrapResponse<T>(payload);
@@ -125,3 +179,4 @@ export const requestClient = {
 };
 
 export const baseRequestClient = requestClient;
+export { HttpRequestError, isUnauthorizedRequestError };

@@ -63,10 +63,14 @@ const totpSchema = computed((): VbenFormSchema[] => {
 const totpSubTitle = computed(() => $t('authentication.totpSubtitle'));
 
 async function handlePasswordLogin(values: Recordable<any>) {
-  const { mfaChallenge } = await authStore.authLogin(values);
-  if (mfaChallenge?.mfaRequired) {
-    mfaTicket.value = mfaChallenge.mfaTicket;
-    loginStage.value = 'totp';
+  try {
+    const { mfaChallenge } = await authStore.authLogin(values);
+    if (mfaChallenge?.mfaRequired) {
+      mfaTicket.value = mfaChallenge.mfaTicket;
+      loginStage.value = 'totp';
+    }
+  } catch {
+    // 错误提示由请求层统一处理，这里只避免表单提交错误冒泡到控制台。
   }
 }
 
