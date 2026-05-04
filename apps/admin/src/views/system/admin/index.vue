@@ -10,6 +10,7 @@ import { Button, Drawer, message, Modal, Space, Tag } from 'ant-design-vue';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
+  deleteAdmin,
   forceLogoutAdmin,
   getAdminList,
   resetAdminTotp,
@@ -43,6 +44,7 @@ const gridRef = ref<InstanceType<typeof DxVxeGrid>>();
 const {
   canCreate,
   canEdit,
+  canDelete,
   canBan,
   canResetPwd,
   canResetTotp,
@@ -186,6 +188,16 @@ async function onResetTotp(record: AdminListItem) {
     });
   } catch (error) {
     console.error('Failed to reset admin totp:', error);
+  }
+}
+
+async function onDelete(record: AdminListItem) {
+  try {
+    await deleteAdmin(record.id);
+    message.success($t('system.admin.deleteSuccess'));
+    await gridReload();
+  } catch (error) {
+    console.error('Failed to delete admin:', error);
   }
 }
 
@@ -471,6 +483,14 @@ onMounted(async () => {
               hidden: !canResetTotp,
               confirmTitle: $t('system.admin.confirmResetTotp'),
               onClick: () => onResetTotp(row as AdminListItem),
+            },
+            {
+              key: 'delete',
+              label: $t('system.admin.delete'),
+              hidden: !canDelete,
+              danger: true,
+              confirmTitle: $t('system.admin.confirmDelete'),
+              onClick: () => onDelete(row as AdminListItem),
             },
             {
               key: 'ban',
