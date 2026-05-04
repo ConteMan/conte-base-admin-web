@@ -37,6 +37,11 @@ export async function updateAdmin(id: number, data: UpdateAdminRequest) {
   return requestClient.put(`/admins/${id}`, data);
 }
 
+/** 删除管理员 */
+export async function deleteAdmin(id: number) {
+  return requestClient.delete(`/admins/${id}`);
+}
+
 /** 设置管理员角色（全量覆盖） */
 export async function setAdminRoles(id: number, data: SetAdminRolesRequest) {
   return requestClient.put(`/admins/${id}/roles`, data);

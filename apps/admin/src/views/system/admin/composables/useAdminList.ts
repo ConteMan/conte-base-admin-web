@@ -36,6 +36,12 @@ export function useAdminList() {
       SYSTEM_PERMISSION_CODES.adminUpdate,
     ]),
   );
+  const canDelete = computed(() =>
+    hasAnyCode([
+      SYSTEM_PERMISSION_CODES.adminManage,
+      SYSTEM_PERMISSION_CODES.adminDelete,
+    ]),
+  );
   const canBan = computed(() =>
     hasAnyCode([
       SYSTEM_PERMISSION_CODES.adminManage,
@@ -131,6 +137,7 @@ export function useAdminList() {
   return {
     canCreate,
     canEdit,
+    canDelete,
     canBan,
     canResetPwd,
     canResetTotp,
