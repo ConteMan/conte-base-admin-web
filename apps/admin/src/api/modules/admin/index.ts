@@ -54,12 +54,21 @@ export async function updateAdminStatus(
   id: number,
   data: UpdateAdminStatusRequest,
 ) {
-  return requestClient.put(`/admins/${id}/status`, data);
+  return requestClient.request(`/admins/${id}/status`, {
+    data,
+    method: 'PATCH',
+  });
 }
 
 /** 强制下线 */
 export async function forceLogoutAdmin(id: number) {
-  return requestClient.post(`/admins/${id}/force-logout`);
+  const sessions = await requestClient.get<{ id: string }[]>(`/admins/${id}/sessions`);
+  await Promise.all(
+    (sessions || []).map((session) =>
+      requestClient.post(`/admins/${id}/sessions/${session.id}/revoke`),
+    ),
+  );
+  return { ok: true };
 }
 
 export type {
