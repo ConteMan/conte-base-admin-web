@@ -739,6 +739,70 @@
         "siteNamePlaceholder": "请输入站点名称",
         "defaultLocale": "默认语言"
       }
+    },
+    "projects": {
+      "title": "项目管理",
+      "description": "维护公开站项目列表，支持增删改与展示顺序控制。",
+      "actions": {
+        "create": "新建项目",
+        "edit": "编辑项目",
+        "delete": "删除项目"
+      },
+      "visible": {
+        "yes": "可见",
+        "no": "隐藏"
+      },
+      "fields": {
+        "actions": "操作",
+        "displayRank": "排序值",
+        "isVisible": "可见状态",
+        "name": "项目名称",
+        "namePlaceholder": "请输入项目名称",
+        "slug": "项目标识",
+        "slugPlaceholder": "请输入项目标识",
+        "summary": "项目简介",
+        "summaryPlaceholder": "请输入项目简介"
+      },
+      "messages": {
+        "confirmDelete": "确认删除该项目？",
+        "createSuccess": "项目创建成功",
+        "deleteSuccess": "项目删除成功",
+        "updateSuccess": "项目更新成功"
+      }
+    },
+    "links": {
+      "title": "链接管理",
+      "description": "维护公开站链接列表，支持增删改与展示策略控制。",
+      "actions": {
+        "create": "新建链接",
+        "edit": "编辑链接",
+        "delete": "删除链接"
+      },
+      "visible": {
+        "yes": "可见",
+        "no": "隐藏"
+      },
+      "openInNewTab": {
+        "yes": "新标签打开",
+        "no": "当前页打开"
+      },
+      "fields": {
+        "actions": "操作",
+        "displayRank": "排序值",
+        "group": "分组",
+        "isVisible": "可见状态",
+        "label": "链接名称",
+        "labelPlaceholder": "请输入链接名称",
+        "openInNewTab": "打开方式",
+        "url": "链接地址",
+        "urlPlaceholder": "请输入链接地址"
+      },
+      "messages": {
+        "confirmDelete": "确认删除该链接？",
+        "createSuccess": "链接创建成功",
+        "deleteSuccess": "链接删除成功",
+        "updateSuccess": "链接更新成功"
+      }
     }
   },
   "api": {

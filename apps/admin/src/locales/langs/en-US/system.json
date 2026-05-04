@@ -739,6 +739,70 @@
         "siteNamePlaceholder": "Enter site name",
         "defaultLocale": "Default Locale"
       }
+    },
+    "projects": {
+      "title": "Projects",
+      "description": "Maintain public project entries with CRUD and ordering controls.",
+      "actions": {
+        "create": "New Project",
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "visible": {
+        "yes": "Visible",
+        "no": "Hidden"
+      },
+      "fields": {
+        "actions": "Actions",
+        "displayRank": "Display Rank",
+        "isVisible": "Visibility",
+        "name": "Name",
+        "namePlaceholder": "Enter project name",
+        "slug": "Slug",
+        "slugPlaceholder": "Enter project slug",
+        "summary": "Summary",
+        "summaryPlaceholder": "Enter project summary"
+      },
+      "messages": {
+        "confirmDelete": "Are you sure you want to delete this project?",
+        "createSuccess": "Project created successfully",
+        "deleteSuccess": "Project deleted successfully",
+        "updateSuccess": "Project updated successfully"
+      }
+    },
+    "links": {
+      "title": "Links",
+      "description": "Maintain public links with CRUD and display strategy controls.",
+      "actions": {
+        "create": "New Link",
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "visible": {
+        "yes": "Visible",
+        "no": "Hidden"
+      },
+      "openInNewTab": {
+        "yes": "Open in New Tab",
+        "no": "Open in Current Tab"
+      },
+      "fields": {
+        "actions": "Actions",
+        "displayRank": "Display Rank",
+        "group": "Group",
+        "isVisible": "Visibility",
+        "label": "Label",
+        "labelPlaceholder": "Enter link label",
+        "openInNewTab": "Open Mode",
+        "url": "URL",
+        "urlPlaceholder": "Enter link URL"
+      },
+      "messages": {
+        "confirmDelete": "Are you sure you want to delete this link?",
+        "createSuccess": "Link created successfully",
+        "deleteSuccess": "Link deleted successfully",
+        "updateSuccess": "Link updated successfully"
+      }
     }
   },
   "api": {
