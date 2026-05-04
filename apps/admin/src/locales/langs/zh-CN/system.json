@@ -696,6 +696,51 @@
     "confirmDeleteItem": "确认删除该字典项？若已被业务使用将删除失败。",
     "translationTip": "保存时会自动将主标签按 {locale} 写入多语言 JSON，并与附加语言一起提交。"
   },
+  "content": {
+    "actions": {
+      "reload": "重新加载",
+      "save": "保存"
+    },
+    "permission": {
+      "queryRequired": "无查看权限，请联系管理员开通后重试。"
+    },
+    "messages": {
+      "profileUpdateSuccess": "个人资料保存成功",
+      "nowUpdateSuccess": "Now 内容保存成功",
+      "siteSettingsUpdateSuccess": "站点配置保存成功"
+    },
+    "profile": {
+      "title": "个人资料",
+      "description": "维护公开站首页展示的个人基础信息。",
+      "fields": {
+        "name": "名称",
+        "namePlaceholder": "请输入展示名称",
+        "title": "头衔",
+        "titlePlaceholder": "请输入个人头衔",
+        "summary": "简介",
+        "summaryPlaceholder": "请输入公开站个人简介"
+      }
+    },
+    "now": {
+      "title": "Now 管理",
+      "description": "维护公开站的 Now 状态展示内容。",
+      "fields": {
+        "title": "标题",
+        "titlePlaceholder": "请输入 Now 标题",
+        "description": "内容",
+        "descriptionPlaceholder": "请输入当前状态内容"
+      }
+    },
+    "siteSettings": {
+      "title": "站点配置",
+      "description": "维护公开站基础站点配置。",
+      "fields": {
+        "siteName": "站点名称",
+        "siteNamePlaceholder": "请输入站点名称",
+        "defaultLocale": "默认语言"
+      }
+    }
+  },
   "api": {
     "networkError": "网络异常，请检查您的网络连接或稍后重试",
     "errMsg401": "登录状态已过期，请重新登录",

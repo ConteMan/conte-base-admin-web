@@ -1,6 +1,7 @@
 export * from './admin';
 export * from './audit-log';
 export * from './config';
+export * from './content';
 export * from './dictionary';
 export * from './legal';
 export * from './meta';

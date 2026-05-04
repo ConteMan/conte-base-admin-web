@@ -696,6 +696,51 @@
     "confirmDeleteItem": "Are you sure you want to delete this dictionary item? It will fail if the item is already in use.",
     "translationTip": "On save, the primary label will be written into localized JSON under {locale} together with all additional locales."
   },
+  "content": {
+    "actions": {
+      "reload": "Reload",
+      "save": "Save"
+    },
+    "permission": {
+      "queryRequired": "You do not have read permission. Please contact an administrator."
+    },
+    "messages": {
+      "profileUpdateSuccess": "Profile updated successfully",
+      "nowUpdateSuccess": "Now content updated successfully",
+      "siteSettingsUpdateSuccess": "Site settings updated successfully"
+    },
+    "profile": {
+      "title": "Profile",
+      "description": "Maintain the basic personal information shown on the public home page.",
+      "fields": {
+        "name": "Name",
+        "namePlaceholder": "Enter display name",
+        "title": "Title",
+        "titlePlaceholder": "Enter profile title",
+        "summary": "Summary",
+        "summaryPlaceholder": "Enter public profile summary"
+      }
+    },
+    "now": {
+      "title": "Now",
+      "description": "Maintain the public-facing Now section content.",
+      "fields": {
+        "title": "Title",
+        "titlePlaceholder": "Enter now title",
+        "description": "Description",
+        "descriptionPlaceholder": "Enter now description"
+      }
+    },
+    "siteSettings": {
+      "title": "Site Settings",
+      "description": "Maintain the base settings used by the public site.",
+      "fields": {
+        "siteName": "Site Name",
+        "siteNamePlaceholder": "Enter site name",
+        "defaultLocale": "Default Locale"
+      }
+    }
+  },
   "api": {
     "networkError": "Network error, please check your network connection or try again later",
     "errMsg401": "Login state has expired, please log in again",
