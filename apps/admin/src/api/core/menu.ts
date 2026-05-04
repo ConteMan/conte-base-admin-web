@@ -18,13 +18,13 @@ const componentMap: Record<string, string> = {
   adminAuditLogs: '/system/audit-log/index',
   adminConfig: '/system/config/index',
   adminDictionaries: '/system/dictionary/index',
-  adminLinks: '/_core/fallback/coming-soon',
-  adminNow: '/_core/fallback/coming-soon',
+  adminLinks: '/content/links/index',
+  adminNow: '/content/now/index',
   adminPermissions: '/system/menu/index',
-  adminProfile: '/_core/fallback/coming-soon',
-  adminProjects: '/_core/fallback/coming-soon',
+  adminProfile: '/content/profile/index',
+  adminProjects: '/content/projects/index',
   adminRoles: '/system/role/index',
-  adminSiteSettings: '/_core/fallback/coming-soon',
+  adminSiteSettings: '/content/site-settings/index',
   adminUsers: '/system/admin/index',
 };
 
