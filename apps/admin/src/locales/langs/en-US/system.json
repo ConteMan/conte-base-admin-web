@@ -113,7 +113,7 @@
     "menuTypeMenu": "Menu"
   },
   "admin": {
-    "title": "User Management",
+    "title": "Backoffice User Management",
     "description": "Manage user accounts including create, edit, ban, role assignment and force logout.",
     "add": "Add User",
     "refresh": "Refresh",
@@ -213,7 +213,7 @@
   },
   "account": {
     "title": "Account Settings",
-    "description": "Review the current signed-in account details and change password with old-password verification.",
+    "description": "Review the current signed-in account details, change password with old-password verification, and manage TOTP 2FA.",
     "entry": "Account Settings",
     "profileCardTitle": "Account Info",
     "passwordCardTitle": "Change Password",
@@ -235,7 +235,7 @@
     "passwordNotMatch": "The two new passwords do not match",
     "submit": "Update Password",
     "changePasswordSuccess": "Password changed successfully",
-    "passwordChangeUnavailable": "Password change is not wired to backend support yet. This page currently exposes the account security skeleton only.",
+    "passwordChangeUnavailable": "Password change is not available in this environment.",
     "totpCardTitle": "Two-Factor Authentication (2FA)",
     "totpStatusLabel": "Current Status",
     "totpEnabled": "On",
@@ -243,8 +243,8 @@
     "totpStatusUnknown": "Pending",
     "totpEnabledDesc": "TOTP is on. A verification code is required when signing in.",
     "totpDisabledDesc": "TOTP is off. Turning it on is recommended to protect admin accounts.",
-    "totpStatusPendingDesc": "The backend does not return complete 2FA status information yet. Treat backend authentication behavior as the source of truth.",
-    "totpManageUnavailable": "TOTP management is not wired to backend support yet, so enable/disable/reset operations are unavailable on this page.",
+    "totpStatusPendingDesc": "2FA status is temporarily unavailable. Please refresh and try again.",
+    "totpManageUnavailable": "TOTP management is not available in this environment.",
     "enableTotp": "Turn On 2FA",
     "disableTotp": "Turn Off 2FA",
     "enableTotpModalTitle": "Enable Two-Factor Authentication",
@@ -300,7 +300,7 @@
     }
   },
   "enumRegistry": {
-    "title": "Enum Registry",
+    "title": "Enum Management",
     "description": "Browse all code enum catalogs defined on the backend, with filtering by namespace and keyword, plus value detail expansion.",
     "keyword": "Keyword",
     "keywordPlaceholder": "Enter an enum name, e.g. admin_status",
@@ -370,7 +370,7 @@
     },
     "categories": {
       "auth": "Auth",
-      "admin": "Admin",
+      "admin": "Backoffice User",
       "role": "Role",
       "menu": "Menu",
       "dictionary": "Dictionary",
@@ -378,7 +378,7 @@
     },
     "targetTypes": {
       "auth": "Auth",
-      "admin": "Admin",
+      "admin": "Backoffice User",
       "role": "Role",
       "menu": "Menu",
       "dictionary": "Dictionary",

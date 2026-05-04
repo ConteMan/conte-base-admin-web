@@ -29,6 +29,7 @@ import {
   disableTotpApi,
   enableTotpApi,
   getAdminProfileApi,
+  getTotpStatusApi,
   setupTotpApi,
 } from '#/api';
 import { DxPasswordInput } from '#/components/common';
@@ -50,6 +51,7 @@ const profile = ref<AdminInfoResponse | null>(null);
 const formRef = ref<FormInstance>();
 const setupModalOpen = ref(false);
 const disableModalOpen = ref(false);
+const totpEnabled = ref<boolean | null>(null);
 const setupInfo = ref<{
   otpauthUrl: string;
   secretMasked: string;
@@ -57,8 +59,8 @@ const setupInfo = ref<{
 } | null>(null);
 const setupVerifyCode = ref('');
 const setupOtpauthUrl = computed(() => setupInfo.value?.otpauthUrl || '');
-const passwordChangeAvailable = false;
-const totpManagementAvailable = false;
+const passwordChangeAvailable = true;
+const totpManagementAvailable = true;
 
 const formModel = reactive<PasswordFormState>({
   confirmPassword: '',
@@ -135,6 +137,20 @@ async function loadProfile() {
   }
 }
 
+async function loadTotpStatus() {
+  try {
+    const status = await getTotpStatusApi();
+    totpEnabled.value = status.totpEnabled;
+  } catch (error) {
+    console.error('Failed to fetch TOTP status:', error);
+    totpEnabled.value = null;
+  }
+}
+
+async function loadAccountData() {
+  await Promise.all([loadProfile(), loadTotpStatus()]);
+}
+
 async function submitChangePassword() {
   await formRef.value?.validate();
 
@@ -154,24 +170,24 @@ async function submitChangePassword() {
 }
 
 onMounted(() => {
-  void loadProfile();
+  void loadAccountData();
 });
 
 const totpStatusTag = computed(() => {
-  if (profile.value?.totpEnabled === true) {
+  if (totpEnabled.value === true) {
     return 'success';
   }
-  if (profile.value?.totpEnabled === false) {
+  if (totpEnabled.value === false) {
     return 'default';
   }
   return 'warning';
 });
 
 const totpStatusText = computed(() => {
-  if (profile.value?.totpEnabled === true) {
+  if (totpEnabled.value === true) {
     return $t('system.account.totpEnabled');
   }
-  if (profile.value?.totpEnabled === false) {
+  if (totpEnabled.value === false) {
     return $t('system.account.totpDisabled');
   }
   return $t('system.account.totpStatusUnknown');
@@ -209,7 +225,7 @@ async function confirmEnableTotp() {
     await enableTotpApi({ totpCode: setupVerifyCode.value });
     message.success($t('system.account.enableTotpSuccess'));
     closeSetupModal();
-    await loadProfile();
+    await loadAccountData();
   } catch (error) {
     console.error('Failed to enable TOTP:', error);
   } finally {
@@ -243,7 +259,7 @@ async function confirmDisableTotp() {
     });
     message.success($t('system.account.disableTotpSuccess'));
     closeDisableModal();
-    await loadProfile();
+    await loadAccountData();
   } catch (error) {
     console.error('Failed to disable TOTP:', error);
   } finally {
@@ -310,6 +326,7 @@ async function copyOtpauthUrl() {
             :rules="passwordRules"
           >
             <Alert
+              v-if="!passwordChangeAvailable"
               class="mb-4"
               show-icon
               type="info"
@@ -318,7 +335,6 @@ async function copyOtpauthUrl() {
             <Form.Item :label="$t('system.account.oldPassword')" name="oldPassword">
               <DxPasswordInput
                 v-model:value="formModel.oldPassword"
-                :disabled="!passwordChangeAvailable"
                 :show-strength="false"
               />
             </Form.Item>
@@ -329,7 +345,6 @@ async function copyOtpauthUrl() {
             >
               <DxPasswordInput
                 v-model:value="formModel.newPassword"
-                :disabled="!passwordChangeAvailable"
                 :show-strength="true"
               />
             </Form.Item>
@@ -339,7 +354,6 @@ async function copyOtpauthUrl() {
             >
               <DxPasswordInput
                 v-model:value="formModel.confirmPassword"
-                :disabled="!passwordChangeAvailable"
                 :show-strength="false"
               />
             </Form.Item>
@@ -366,14 +380,15 @@ async function copyOtpauthUrl() {
           </div>
           <p class="totp-description">
             {{
-              profile?.totpEnabled === undefined
+              totpEnabled === null
                 ? $t('system.account.totpStatusPendingDesc')
-                : profile?.totpEnabled
+                : totpEnabled
                 ? $t('system.account.totpEnabledDesc')
                 : $t('system.account.totpDisabledDesc')
             }}
           </p>
           <Alert
+            v-if="!totpManagementAvailable"
             class="mb-4"
             show-icon
             type="info"
@@ -381,7 +396,7 @@ async function copyOtpauthUrl() {
           />
           <div class="totp-actions">
             <Button
-              v-if="!profile?.totpEnabled"
+              v-if="totpEnabled !== true"
               :disabled="!totpManagementAvailable"
               :loading="setupLoading"
               type="primary"
@@ -392,6 +407,7 @@ async function copyOtpauthUrl() {
             <Button
               v-else
               :disabled="!totpManagementAvailable"
+              :loading="totpSubmitting"
               danger
               type="primary"
               @click="openDisableModal"

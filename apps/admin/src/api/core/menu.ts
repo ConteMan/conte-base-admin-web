@@ -18,7 +18,10 @@ const componentMap: Record<string, string> = {
   adminAuditLogs: '/system/audit-log/index',
   adminConfig: '/system/config/index',
   adminDictionaries: '/system/dictionary/index',
+  adminDictionary: '/system/dictionary/index',
+  adminEnumRegistry: '/system/enum-registry/index',
   adminLinks: '/content/links/index',
+  adminMenuManage: '/system/menu/index',
   adminNow: '/content/now/index',
   adminPermissions: '/system/menu/index',
   adminProfile: '/content/profile/index',
@@ -26,6 +29,7 @@ const componentMap: Record<string, string> = {
   adminRoles: '/system/role/index',
   adminSiteSettings: '/content/site-settings/index',
   adminUsers: '/system/admin/index',
+  adminAdmins: '/system/admin/index',
 };
 
 function normalizeComponent(item: BackendMenuItem, isGroup: boolean): string {
