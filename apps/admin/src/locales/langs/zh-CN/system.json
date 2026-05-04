@@ -113,7 +113,7 @@
     "menuTypeMenu": "菜单"
   },
   "admin": {
-    "title": "用户管理",
+    "title": "后台用户管理",
     "description": "管理后台用户账号的增删改查、角色分配、封禁与强制下线。",
     "add": "新增用户",
     "refresh": "刷新",
@@ -213,7 +213,7 @@
   },
   "account": {
     "title": "账号设置",
-    "description": "查看当前登录账号信息，并可通过旧密码校验后修改登录密码。",
+    "description": "查看当前登录账号信息，并可通过旧密码校验后修改登录密码与管理双因素认证。",
     "entry": "账号设置",
     "profileCardTitle": "账号信息",
     "passwordCardTitle": "修改密码",
@@ -235,7 +235,7 @@
     "passwordNotMatch": "两次输入的新密码不一致",
     "submit": "确认修改",
     "changePasswordSuccess": "密码修改成功",
-    "passwordChangeUnavailable": "当前阶段尚未接入密码修改后端能力，本页仅展示账号安全骨架。",
+    "passwordChangeUnavailable": "当前环境未开放密码修改能力，请联系系统管理员。",
     "totpCardTitle": "双因素认证（2FA）",
     "totpStatusLabel": "当前状态",
     "totpEnabled": "已开启",
@@ -243,8 +243,8 @@
     "totpStatusUnknown": "状态待确认",
     "totpEnabledDesc": "已开启 TOTP 二次验证，登录时需要输入动态验证码。",
     "totpDisabledDesc": "未开启 TOTP，建议开启后提升后台账号安全性。",
-    "totpStatusPendingDesc": "当前阶段尚未从后端返回完整的 2FA 状态信息，请以后端鉴权能力为准。",
-    "totpManageUnavailable": "当前阶段尚未接入 TOTP 管理后端能力，本页不提供启用、停用或重置操作。",
+    "totpStatusPendingDesc": "暂未获取到 2FA 状态，请刷新后重试。",
+    "totpManageUnavailable": "当前环境未开放 2FA 管理能力，请联系系统管理员。",
     "enableTotp": "开启 2FA",
     "disableTotp": "关闭 2FA",
     "enableTotpModalTitle": "启用双因素认证",
@@ -300,7 +300,7 @@
     }
   },
   "enumRegistry": {
-    "title": "统一枚举",
+    "title": "枚举管理",
     "description": "集中查看后端已定义的代码枚举目录，支持按命名空间与关键字筛选，并展开查看取值详情。",
     "keyword": "关键字",
     "keywordPlaceholder": "请输入枚举名称，例如 admin_status",
@@ -370,7 +370,7 @@
     },
     "categories": {
       "auth": "认证",
-      "admin": "管理员",
+      "admin": "后台用户",
       "role": "角色",
       "menu": "菜单",
       "dictionary": "数据字典",
@@ -378,7 +378,7 @@
     },
     "targetTypes": {
       "auth": "认证",
-      "admin": "管理员",
+      "admin": "后台用户",
       "role": "角色",
       "menu": "菜单",
       "dictionary": "数据字典",

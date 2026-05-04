@@ -37,7 +37,11 @@ export namespace AuthApi {
 
 interface BackendLoginResult {
   requires_totp: boolean;
-  ticket: string;
+  ticket?: string;
+  access_token?: string;
+  user?: {
+    roles?: string[];
+  };
 }
 
 interface BackendVerifyResult {
@@ -58,15 +62,26 @@ function unsupportedAdminAccountAction(actionName: string): never {
 export async function loginApi(data: AuthApi.LoginParams): Promise<AuthApi.LoginResult> {
   const result = await requestClient.post<BackendLoginResult>('/auth/login', data);
   if (!result.requires_totp) {
-    throw new Error('ConteBase 当前要求后台登录必须经过 TOTP 校验');
+    if (!result.access_token) {
+      throw new Error('登录响应缺少 access_token');
+    }
+    return {
+      accessToken: result.access_token,
+      mfaRequired: false,
+      refreshToken: '',
+      roles: result.user?.roles || [],
+    } satisfies AuthApi.LoginSuccessResult;
   }
 
   const challenge: AuthApi.LoginMFAChallengeResult = {
     mfaRequired: true,
-    mfaTicket: result.ticket,
+    mfaTicket: result.ticket || '',
     mfaType: 'totp',
     ticketExpiresIn: 300,
   };
+  if (!challenge.mfaTicket) {
+    throw new Error('登录响应缺少 mfa ticket');
+  }
   return challenge;
 }
 
@@ -96,15 +111,13 @@ export async function logoutApi() {
 }
 
 export async function changePasswordApi(
-  _data: AuthApi.ChangePasswordParams,
+  data: AuthApi.ChangePasswordParams,
 ): Promise<{ ok: true }> {
-  unsupportedAdminAccountAction('修改密码');
+  return requestClient.put<{ ok: true }>('/auth/change-password', data);
 }
 
 export async function getTotpStatusApi() {
-  return {
-    totpEnabled: true,
-  };
+  return requestClient.get<{ totpEnabled: boolean }>('/auth/totp/status');
 }
 
 export async function setupTotpApi(data?: {
@@ -115,26 +128,37 @@ export async function setupTotpApi(data?: {
   secretMasked: string;
   setupExpiresIn: number;
 }> {
-  void data;
-  unsupportedAdminAccountAction('TOTP 配置');
+  return requestClient.post<{
+    otpauthUrl: string;
+    secretMasked: string;
+    setupExpiresIn: number;
+  }>('/auth/totp/setup', {
+    accountName: data?.accountName,
+    issuer: data?.issuer,
+  });
 }
 
 export async function enableTotpApi(
-  _data?: { totpCode: string },
+  data?: { totpCode: string },
 ): Promise<{ ok: true }> {
-  unsupportedAdminAccountAction('启用 TOTP');
+  return requestClient.post<{ ok: true }>('/auth/totp/enable', data);
 }
 
 export async function disableTotpApi(
-  _data?: { password: string; totpCode: string },
+  data?: { password: string; totpCode: string },
 ): Promise<{ ok: true }> {
-  unsupportedAdminAccountAction('停用 TOTP');
+  return requestClient.post<{ ok: true }>('/auth/totp/disable', data);
 }
 
 export async function resetTotpApi(
-  _data?: { targetAdminId: number | string },
+  data?: { targetAdminId: number | string },
 ): Promise<{ ok: true }> {
-  unsupportedAdminAccountAction('重置 TOTP');
+  if (!data?.targetAdminId) {
+    unsupportedAdminAccountAction('重置 TOTP');
+  }
+  return requestClient.post<{ ok: true }>(
+    `/admins/${data.targetAdminId}/reset-totp`,
+  );
 }
 
 export async function getAccessCodesApi() {

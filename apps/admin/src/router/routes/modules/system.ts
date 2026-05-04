@@ -37,7 +37,7 @@ const routes: RouteRecordRaw[] = [
         meta: {
           authority: [SYSTEM_PERMISSION_CODES.adminManage],
           icon: 'lucide:users',
-          title: '用户管理',
+          title: '后台用户',
         },
         name: 'AdminManage',
         path: '/system/admin',
@@ -57,7 +57,7 @@ const routes: RouteRecordRaw[] = [
         meta: {
           authority: [SYSTEM_PERMISSION_CODES.metaEnumQuery],
           icon: 'lucide:code-2',
-          title: '统一枚举',
+          title: '枚举管理',
         },
         name: 'EnumRegistryManage',
         path: '/system/enum-registry',
