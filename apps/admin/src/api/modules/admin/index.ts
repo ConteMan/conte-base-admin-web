@@ -6,6 +6,7 @@ import type {
   CreateAdminRequest,
   CreateAdminResponse,
   ResetAdminPasswordRequest,
+  ResetAdminTotpResponse,
   SetAdminRolesRequest,
   UpdateAdminRequest,
   UpdateAdminStatusRequest,
@@ -49,6 +50,11 @@ export async function resetAdminPassword(
   return requestClient.put(`/admins/${id}/reset-password`, data);
 }
 
+/** 重置管理员 TOTP */
+export async function resetAdminTotp(id: number) {
+  return requestClient.post<ResetAdminTotpResponse>(`/admins/${id}/reset-totp`);
+}
+
 /** 封禁/解封管理员 */
 export async function updateAdminStatus(
   id: number,
@@ -78,6 +84,7 @@ export type {
   CreateAdminRequest,
   CreateAdminResponse,
   ResetAdminPasswordRequest,
+  ResetAdminTotpResponse,
   SetAdminRolesRequest,
   UpdateAdminRequest,
   UpdateAdminStatusRequest,

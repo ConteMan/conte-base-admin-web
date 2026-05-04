@@ -37,6 +37,9 @@ export interface CreateAdminRequest {
 
 export interface CreateAdminResponse {
   id: number;
+  otpAuthUrl: string;
+  totpSecret: string;
+  username: string;
 }
 
 export interface UpdateAdminRequest {
@@ -50,6 +53,12 @@ export interface SetAdminRolesRequest {
 
 export interface ResetAdminPasswordRequest {
   newPassword: string;
+}
+
+export interface ResetAdminTotpResponse {
+  otpAuthUrl: string;
+  totpSecret: string;
+  username: string;
 }
 
 export interface UpdateAdminStatusRequest {

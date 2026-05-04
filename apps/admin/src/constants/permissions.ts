@@ -6,6 +6,7 @@ export const SYSTEM_PERMISSION_CODES = {
   adminManage: 'admin:manage',
   adminQuery: 'admin:query',
   adminResetPwd: 'admin:reset_pwd',
+  adminResetTotp: 'admin:reset_totp',
   adminSessionView: 'admin:session:view',
   adminSetRoles: 'admin:set_roles',
   adminUpdate: 'admin:update',

@@ -48,6 +48,12 @@ export function useAdminList() {
       SYSTEM_PERMISSION_CODES.adminResetPwd,
     ]),
   );
+  const canResetTotp = computed(() =>
+    hasAnyCode([
+      SYSTEM_PERMISSION_CODES.adminManage,
+      SYSTEM_PERMISSION_CODES.adminResetTotp,
+    ]),
+  );
   const canForceLogout = computed(() =>
     hasAnyCode([
       SYSTEM_PERMISSION_CODES.adminManage,
@@ -127,6 +133,7 @@ export function useAdminList() {
     canEdit,
     canBan,
     canResetPwd,
+    canResetTotp,
     canForceLogout,
     canSetRoles,
     canViewSessions,

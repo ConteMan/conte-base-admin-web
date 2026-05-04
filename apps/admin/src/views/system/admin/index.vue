@@ -1,17 +1,18 @@
 <script lang="ts" setup>
 import type { AdminListItem, RoleItem } from '#/api';
 
-import { computed, onMounted, ref } from 'vue';
+import { computed, h, onMounted, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
 import { formatEmpty } from '@vben/utils';
 
-import { Button, Drawer, message, Space, Tag } from 'ant-design-vue';
+import { Button, Drawer, message, Modal, Space, Tag } from 'ant-design-vue';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   forceLogoutAdmin,
   getAdminList,
+  resetAdminTotp,
   updateAdminStatus,
 } from '#/api';
 import {
@@ -44,6 +45,7 @@ const {
   canEdit,
   canBan,
   canResetPwd,
+  canResetTotp,
   canForceLogout,
   canSetRoles,
   canViewSessions,
@@ -161,6 +163,29 @@ async function onForceLogout(record: AdminListItem) {
     await gridReload();
   } catch (error) {
     console.error('Failed to force logout admin:', error);
+  }
+}
+
+async function onResetTotp(record: AdminListItem) {
+  try {
+    const result = await resetAdminTotp(record.id);
+    message.success($t('system.admin.resetTotpSuccess'));
+    Modal.info({
+      title: $t('system.admin.totpProvisionTitle'),
+      content: h('div', { class: 'space-y-3' }, [
+        h('p', $t('system.admin.totpProvisionDescription')),
+        h('div', [
+          h('div', { class: 'text-xs text-gray-500' }, $t('system.admin.totpSecretLabel')),
+          h('pre', { class: 'mt-1 whitespace-pre-wrap break-all rounded bg-gray-100 p-2 text-xs' }, result.totpSecret),
+        ]),
+        h('div', [
+          h('div', { class: 'text-xs text-gray-500' }, $t('system.admin.otpAuthUrlLabel')),
+          h('pre', { class: 'mt-1 max-h-32 overflow-auto whitespace-pre-wrap break-all rounded bg-gray-100 p-2 text-xs' }, result.otpAuthUrl),
+        ]),
+      ]),
+    });
+  } catch (error) {
+    console.error('Failed to reset admin totp:', error);
   }
 }
 
@@ -443,9 +468,9 @@ onMounted(async () => {
             {
               key: 'resetTotp',
               label: $t('system.admin.resetTotp'),
-              hidden: true,
+              hidden: !canResetTotp,
               confirmTitle: $t('system.admin.confirmResetTotp'),
-              onClick: () => {},
+              onClick: () => onResetTotp(row as AdminListItem),
             },
             {
               key: 'ban',
