@@ -12,7 +12,6 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   forceLogoutAdmin,
   getAdminList,
-  resetTotpApi,
   updateAdminStatus,
 } from '#/api';
 import {
@@ -162,16 +161,6 @@ async function onForceLogout(record: AdminListItem) {
     await gridReload();
   } catch (error) {
     console.error('Failed to force logout admin:', error);
-  }
-}
-
-async function onResetTotp(record: AdminListItem) {
-  try {
-    await resetTotpApi({ targetAdminId: record.id });
-    message.success($t('system.admin.resetTotpSuccess'));
-    await gridReload();
-  } catch (error) {
-    console.error('Failed to reset admin 2FA:', error);
   }
 }
 
@@ -454,9 +443,9 @@ onMounted(async () => {
             {
               key: 'resetTotp',
               label: $t('system.admin.resetTotp'),
-              hidden: !canResetPwd,
+              hidden: true,
               confirmTitle: $t('system.admin.confirmResetTotp'),
-              onClick: () => onResetTotp(row as AdminListItem),
+              onClick: () => {},
             },
             {
               key: 'ban',

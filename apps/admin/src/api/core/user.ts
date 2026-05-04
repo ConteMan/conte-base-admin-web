@@ -69,12 +69,21 @@ export async function getUserInfoApi(
 }
 
 export async function getAdminSessionsApi(_adminID?: number | string): Promise<AdminSessionResponse[]> {
-  return [];
+  if (_adminID === undefined || _adminID === null || _adminID === '') {
+    return [];
+  }
+  return requestClient.get<AdminSessionResponse[]>(`/admins/${_adminID}/sessions`);
 }
 
 export async function revokeAdminSessionApi(
   _adminID?: number | string,
   _sessionID?: string,
 ) {
-  return { ok: true };
+  if (_adminID === undefined || _adminID === null || _adminID === '') {
+    throw new Error('缺少管理员 ID');
+  }
+  if (!_sessionID) {
+    throw new Error('缺少会话 ID');
+  }
+  return requestClient.post(`/admins/${_adminID}/sessions/${_sessionID}/revoke`);
 }
