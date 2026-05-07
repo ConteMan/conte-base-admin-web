@@ -6,6 +6,7 @@ interface BackendMenuItem {
   children?: BackendMenuItem[];
   component?: string;
   icon?: string;
+  is_hidden?: boolean;
   key: string;
   path: string;
   permission_code?: string;
@@ -71,7 +72,10 @@ function mapMenuItems(items: BackendMenuItem[]): RouteRecordStringComponent[] {
       component: normalizeComponent(item, isGroup),
       meta: {
         authority: item.permission_code ? [item.permission_code] : undefined,
-        icon: item.icon || (item.key.startsWith('content') ? 'lucide:files' : 'lucide:settings'),
+        hideInMenu: item.is_hidden,
+        icon:
+          item.icon ||
+          (item.key.startsWith('content') ? 'lucide:files' : 'lucide:settings'),
         order: index + 1,
         ...resolveTitle(item),
       },

@@ -47,6 +47,11 @@ export const useAuthStore = defineStore('auth', () => {
     // 存储 Refresh Token 用于无感续期
     accessStore.setRefreshToken(refreshToken || '');
 
+    // 每次完成登录都重新生成动态路由和菜单，避免过期会话遗留的空菜单状态继续复用
+    accessStore.setAccessMenus([]);
+    accessStore.setAccessRoutes([]);
+    accessStore.setIsAccessChecked(false);
+
     // 优先使用登录接口返回的角色，再由 /auth/me 返回值覆盖
     userStore.setUserRoles(roles);
 

@@ -25,14 +25,15 @@ cp .env.example .env.production
 pnpm dev
 ```
 
-服务启动后访问 `http://localhost:5666`，使用 ConteBase 管理端账号登录。
+服务启动后访问 `http://localhost:5173`，使用 ConteBase 管理端账号登录。
 
 ## 终端协作与可观测入口
 
 - 首选启动方式：在 `apps/admin/` 下执行 `pnpm dev`
 - 首选观察面：当前终端 stdout / stderr
-- 默认访问地址：`http://localhost:5666`
+- 默认访问地址：`http://localhost:5173`
 - 推荐验证命令：`pnpm typecheck`
+- 页面联调命令：`pnpm test:e2e`
 - 如 dev server 不在当前协作终端，建议保留稳定日志文件：
 
 ```bash
@@ -53,9 +54,19 @@ pnpm dev 2>&1 | tee ../../tmp/dev-logs/admin-web.dev.log
 | `pnpm dev` | 启动本地开发服务器 |
 | `pnpm build` | 执行生产构建（会自动预构建 workspace 依赖，依赖 `apps/admin/.env.production`） |
 | `pnpm env:check:example` | 校验 `.env.example` 是否覆盖代码里使用的环境变量 |
+| `pnpm test:e2e` | 执行 Playwright 页面联调测试，默认使用独立端口 `5175` |
 | `pnpm typecheck` | 执行 TypeScript 类型检查 |
 
 *(如果在根目录，推荐使用 `pnpm run build:admin` 构建管理端)*
+
+Playwright e2e 需要先启动 `conte-base-service`，并通过环境变量提供测试账号：
+
+```bash
+CONTE_BASE_E2E_ADMIN_USERNAME='<username>' \
+CONTE_BASE_E2E_ADMIN_PASSWORD='<password>' \
+CONTE_BASE_E2E_ADMIN_TOTP_SECRET='<totp-secret>' \
+pnpm test:e2e
+```
 
 ---
 

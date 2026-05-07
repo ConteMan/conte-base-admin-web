@@ -11,6 +11,8 @@ import {
 } from '@vben/common-ui';
 import { $t } from '@vben/locales';
 
+import { message } from 'ant-design-vue';
+
 import { useAuthStore } from '#/store';
 
 import { appConfig } from '../../../app-config';
@@ -69,8 +71,10 @@ async function handlePasswordLogin(values: Recordable<any>) {
       mfaTicket.value = mfaChallenge.mfaTicket;
       loginStage.value = 'totp';
     }
-  } catch {
-    // 错误提示由请求层统一处理，这里只避免表单提交错误冒泡到控制台。
+  } catch (error) {
+    message.error(
+      error instanceof Error ? error.message : $t('authentication.loginError'),
+    );
   }
 }
 
@@ -80,8 +84,10 @@ async function handleVerifyTotp(values: Recordable<any>) {
       mfaTicket: mfaTicket.value,
       totpCode: values.totpCode,
     });
-  } catch {
-    // 错误提示由请求拦截器统一处理，这里兜底避免 Vue 输出未处理 Promise 警告。
+  } catch (error) {
+    message.error(
+      error instanceof Error ? error.message : $t('authentication.loginError'),
+    );
   }
 }
 

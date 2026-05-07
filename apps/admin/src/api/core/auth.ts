@@ -60,7 +60,9 @@ function unsupportedAdminAccountAction(actionName: string): never {
 }
 
 export async function loginApi(data: AuthApi.LoginParams): Promise<AuthApi.LoginResult> {
-  const result = await requestClient.post<BackendLoginResult>('/auth/login', data);
+  const result = await requestClient.post<BackendLoginResult>('/auth/login', data, {
+    showErrorMessage: false,
+  });
   if (!result.requires_totp) {
     if (!result.access_token) {
       throw new Error('登录响应缺少 access_token');
@@ -88,10 +90,16 @@ export async function loginApi(data: AuthApi.LoginParams): Promise<AuthApi.Login
 export async function verifyTotpApi(
   data: AuthApi.VerifyTotpParams,
 ): Promise<AuthApi.VerifyTotpResult> {
-  const result = await requestClient.post<BackendVerifyResult>('/auth/totp/verify', {
-    code: data.totpCode,
-    ticket: data.mfaTicket,
-  });
+  const result = await requestClient.post<BackendVerifyResult>(
+    '/auth/totp/verify',
+    {
+      code: data.totpCode,
+      ticket: data.mfaTicket,
+    },
+    {
+      showErrorMessage: false,
+    },
+  );
   return {
     accessToken: result.access_token,
     mfaRequired: false,
