@@ -9,6 +9,7 @@ interface RequestConfig {
   headers?: HeadersInit;
   method?: string;
   params?: object;
+  showErrorMessage?: boolean;
 }
 
 interface SuccessEnvelope<T> {
@@ -145,7 +146,10 @@ async function request<T>(url: string, config: RequestConfig = {}) {
     const errorMessage = resolveErrorMessage(errorPayload, response.status);
     const errorCode = errorPayload.error?.code;
 
-    if (response.status !== 401 || !accessToken) {
+    if (
+      config.showErrorMessage !== false &&
+      (response.status !== 401 || !accessToken)
+    ) {
       message.error(errorMessage);
     }
 

@@ -39,12 +39,12 @@ const {
   statusOptions,
 } = useMenuList();
 
-  const {
-    formRef,
-    formResetValues,
-    formSchema,
-    formVisible,
-    isEditing,
+const {
+  formRef,
+  formResetValues,
+  formSchema,
+  formVisible,
+  isEditing,
   onCloseModal,
   onSubmit,
   openCreate,
