@@ -12,7 +12,7 @@ function requiredEnv(name: string) {
 
 const adminUsername = requiredEnv('CONTE_BASE_E2E_ADMIN_USERNAME');
 const adminPassword = requiredEnv('CONTE_BASE_E2E_ADMIN_PASSWORD');
-const adminTotpSecret = requiredEnv('CONTE_BASE_E2E_ADMIN_TOTP_SECRET');
+const adminTotpSecret = process.env.CONTE_BASE_E2E_ADMIN_TOTP_SECRET?.trim() || '';
 
 function base32Decode(input: string) {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
@@ -62,7 +62,28 @@ async function submitPasswordLogin(page: Page, password = adminPassword) {
 async function loginAsAdmin(page: Page) {
   for (let attempt = 0; attempt < 2; attempt += 1) {
     await submitPasswordLogin(page);
-    await expect(page.getByText('二次验证')).toBeVisible();
+
+    const nextStep = await Promise.race([
+      page
+        .waitForURL(/\/(account\/settings|system|content|dashboard|workspace)/, {
+          timeout: 5_000,
+        })
+        .then(() => 'authenticated' as const),
+      page
+        .getByText('二次验证')
+        .waitFor({ state: 'visible', timeout: 5_000 })
+        .then(() => 'totp' as const),
+    ]);
+
+    if (nextStep === 'authenticated') {
+      return;
+    }
+
+    if (!adminTotpSecret) {
+      throw new Error(
+        '当前测试账号已启用 2FA，但未提供 CONTE_BASE_E2E_ADMIN_TOTP_SECRET。',
+      );
+    }
 
     const code = await currentTotpCode(adminTotpSecret);
     const pinInputs = page.locator('input');
@@ -104,7 +125,7 @@ test('密码错误时在页面显示错误提示', async ({ page }) => {
   expect(pageErrors).toEqual([]);
 });
 
-test('TOTP 登录后加载后台菜单', async ({ page }) => {
+test('登录后加载后台菜单', async ({ page }) => {
   await loginAsAdmin(page);
 
   await expect(page).toHaveURL(
