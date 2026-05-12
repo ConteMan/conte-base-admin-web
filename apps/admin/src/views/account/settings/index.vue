@@ -8,7 +8,6 @@ import { Page } from '@vben/common-ui';
 import { formatEmpty } from '@vben/utils';
 
 import {
-  Alert,
   Button,
   Card,
   Col,
@@ -59,8 +58,6 @@ const setupInfo = ref<{
 } | null>(null);
 const setupVerifyCode = ref('');
 const setupOtpauthUrl = computed(() => setupInfo.value?.otpauthUrl || '');
-const passwordChangeAvailable = true;
-const totpManagementAvailable = true;
 
 const formModel = reactive<PasswordFormState>({
   confirmPassword: '',
@@ -130,8 +127,6 @@ async function loadProfile() {
   loading.value = true;
   try {
     profile.value = await getAdminProfileApi();
-  } catch (error) {
-    console.error('Failed to fetch current admin profile:', error);
   } finally {
     loading.value = false;
   }
@@ -141,8 +136,7 @@ async function loadTotpStatus() {
   try {
     const status = await getTotpStatusApi();
     totpEnabled.value = status.totpEnabled;
-  } catch (error) {
-    console.error('Failed to fetch TOTP status:', error);
+  } catch {
     totpEnabled.value = null;
   }
 }
@@ -162,8 +156,8 @@ async function submitChangePassword() {
     });
     message.success($t('system.account.changePasswordSuccess'));
     formRef.value?.resetFields();
-  } catch (error) {
-    console.error('Failed to change password:', error);
+  } catch {
+    // 请求层已经负责展示错误提示和登录过期处理
   } finally {
     submitting.value = false;
   }
@@ -202,8 +196,8 @@ async function openSetupModal() {
     });
     setupVerifyCode.value = '';
     setupModalOpen.value = true;
-  } catch (error) {
-    console.error('Failed to setup TOTP:', error);
+  } catch {
+    // 请求层已经负责展示错误提示和登录过期处理
   } finally {
     setupLoading.value = false;
   }
@@ -226,8 +220,8 @@ async function confirmEnableTotp() {
     message.success($t('system.account.enableTotpSuccess'));
     closeSetupModal();
     await loadAccountData();
-  } catch (error) {
-    console.error('Failed to enable TOTP:', error);
+  } catch {
+    // 请求层已经负责展示错误提示和登录过期处理
   } finally {
     totpSubmitting.value = false;
   }
@@ -260,8 +254,8 @@ async function confirmDisableTotp() {
     message.success($t('system.account.disableTotpSuccess'));
     closeDisableModal();
     await loadAccountData();
-  } catch (error) {
-    console.error('Failed to disable TOTP:', error);
+  } catch {
+    // 请求层已经负责展示错误提示和登录过期处理
   } finally {
     totpSubmitting.value = false;
   }
@@ -325,13 +319,6 @@ async function copyOtpauthUrl() {
             :model="formModel"
             :rules="passwordRules"
           >
-            <Alert
-              v-if="!passwordChangeAvailable"
-              class="mb-4"
-              show-icon
-              type="info"
-              :message="$t('system.account.passwordChangeUnavailable')"
-            />
             <Form.Item :label="$t('system.account.oldPassword')" name="oldPassword">
               <DxPasswordInput
                 v-model:value="formModel.oldPassword"
@@ -360,7 +347,6 @@ async function copyOtpauthUrl() {
             <div class="account-password-actions">
               <Button
                 class="account-password-submit"
-                :disabled="!passwordChangeAvailable"
                 :loading="submitting"
                 type="primary"
                 @click="submitChangePassword"
@@ -387,17 +373,9 @@ async function copyOtpauthUrl() {
                 : $t('system.account.totpDisabledDesc')
             }}
           </p>
-          <Alert
-            v-if="!totpManagementAvailable"
-            class="mb-4"
-            show-icon
-            type="info"
-            :message="$t('system.account.totpManageUnavailable')"
-          />
           <div class="totp-actions">
             <Button
               v-if="totpEnabled !== true"
-              :disabled="!totpManagementAvailable"
               :loading="setupLoading"
               type="primary"
               @click="openSetupModal"
@@ -406,7 +384,6 @@ async function copyOtpauthUrl() {
             </Button>
             <Button
               v-else
-              :disabled="!totpManagementAvailable"
               :loading="totpSubmitting"
               danger
               type="primary"

@@ -106,6 +106,7 @@ function appendAccountSettingsToSystem(
         children.push({
           component: '/account/settings/index',
           meta: {
+            activePath: '/system',
             hideInMenu: true,
             title: '账号设置',
             titleI18n: {
@@ -129,47 +130,6 @@ function appendAccountSettingsToSystem(
   });
 }
 
-function ensureAccountSettingsRoute(
-  routes: RouteRecordStringComponent[] | null | undefined,
-): RouteRecordStringComponent[] {
-  const appendedRoutes = appendAccountSettingsToSystem(routes);
-  if (hasRouteName(appendedRoutes, 'AccountSettings')) {
-    return appendedRoutes;
-  }
-
-  return [
-    ...appendedRoutes,
-    {
-      component: 'BasicLayout',
-      meta: {
-        hideInMenu: true,
-        title: '账号',
-        titleI18n: {
-          'en-US': 'Account',
-          'zh-CN': '账号',
-        },
-      },
-      name: 'AccountRoot',
-      path: '/account',
-      children: [
-        {
-          component: '/account/settings/index',
-          meta: {
-            hideInMenu: true,
-            title: '账号设置',
-            titleI18n: {
-              'en-US': 'Account Settings',
-              'zh-CN': '账号设置',
-            },
-          },
-          name: 'AccountSettings',
-          path: '/account/settings',
-        },
-      ],
-    },
-  ];
-}
-
 async function generateAccess(options: GenerateMenuAndRoutesOptions) {
   const pageMap: ComponentRecordType = import.meta.glob('../views/**/*.vue');
 
@@ -182,9 +142,12 @@ async function generateAccess(options: GenerateMenuAndRoutesOptions) {
     ...options,
     fetchMenuListAsync: async () => {
       const menus = await getAllMenusApi();
-      const augmentedMenus = ensureAccountSettingsRoute(
+      const augmentedMenus = appendAccountSettingsToSystem(
         ensureDictionaryItemRoute(menus),
       );
+      if (!hasRouteName(augmentedMenus, 'AccountSettings')) {
+        throw new Error('系统菜单缺少账号设置挂载点，请检查后端 /meta/menus 返回值');
+      }
       // 根据当前 locale 解析 titleI18n → title
       return applyI18nToRoutes(augmentedMenus);
     },

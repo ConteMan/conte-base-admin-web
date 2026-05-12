@@ -145,12 +145,14 @@ async function request<T>(url: string, config: RequestConfig = {}) {
     const errorPayload = payload as ErrorEnvelope;
     const errorMessage = resolveErrorMessage(errorPayload, response.status);
     const errorCode = errorPayload.error?.code;
+    const isUnauthorized = response.status === 401;
 
-    if (
-      config.showErrorMessage !== false &&
-      (response.status !== 401 || !accessToken)
-    ) {
+    if (config.showErrorMessage !== false) {
       message.error(errorMessage);
+    }
+    if (isUnauthorized && accessToken) {
+      const accessStore = useAccessStore();
+      accessStore.setLoginExpired(true);
     }
 
     throw new HttpRequestError(errorMessage, {
