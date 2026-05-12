@@ -1,7 +1,7 @@
 import type { AdminListItem, CreateAdminRequest, UpdateAdminRequest } from '#/api';
 import type { ComputedRef } from 'vue';
 
-import { computed, h, markRaw, ref } from 'vue';
+import { computed, markRaw, ref } from 'vue';
 
 import { message, Modal } from 'ant-design-vue';
 
@@ -219,21 +219,11 @@ export function useAdminForm(
           roleIds: values.roleIds,
           username: values.username.trim(),
         };
-        const result = await createAdmin(payload);
+        await createAdmin(payload);
         message.success($t('system.admin.createSuccess'));
         Modal.info({
-          title: $t('system.admin.totpProvisionTitle'),
-          content: h('div', { class: 'space-y-3' }, [
-            h('p', $t('system.admin.totpProvisionDescription')),
-            h('div', [
-              h('div', { class: 'text-xs text-gray-500' }, $t('system.admin.totpSecretLabel')),
-              h('pre', { class: 'mt-1 whitespace-pre-wrap break-all rounded bg-gray-100 p-2 text-xs' }, result.totpSecret),
-            ]),
-            h('div', [
-              h('div', { class: 'text-xs text-gray-500' }, $t('system.admin.otpAuthUrlLabel')),
-              h('pre', { class: 'mt-1 max-h-32 overflow-auto whitespace-pre-wrap break-all rounded bg-gray-100 p-2 text-xs' }, result.otpAuthUrl),
-            ]),
-          ]),
+          title: $t('system.admin.createFollowupTitle'),
+          content: $t('system.admin.createFollowupDescription'),
         });
       }
       drawerVisible.value = false;

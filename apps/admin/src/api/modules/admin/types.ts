@@ -37,8 +37,6 @@ export interface CreateAdminRequest {
 
 export interface CreateAdminResponse {
   id: number;
-  otpAuthUrl: string;
-  totpSecret: string;
   username: string;
 }
 
