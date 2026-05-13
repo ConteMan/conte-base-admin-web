@@ -43,6 +43,8 @@ export type ContentNoteStatus = 'draft' | 'offline' | 'published';
 
 export interface ContentNote {
   category: string;
+  categoryId: number;
+  categoryRef?: TaxonomyReference;
   content: string;
   coverImage: string;
   createdAt: null | string;
@@ -56,9 +58,37 @@ export interface ContentNote {
   seoTitle: string;
   slug: string;
   status: ContentNoteStatus;
+  tagIds: number[];
+  tagRefs?: TaxonomyReference[];
   tags: string[];
   title: string;
   updatedAt: null | string;
+}
+
+export interface TaxonomyReference {
+  id: number;
+  slug: string;
+  name: string;
+}
+
+export interface ContentCategory {
+  id: number;
+  parentId?: number;
+  slug: string;
+  name: string;
+  description: string;
+  locale: string;
+  displayRank: number;
+  status: 'active' | 'disabled';
+}
+
+export interface ContentTag {
+  id: number;
+  slug: string;
+  name: string;
+  description: string;
+  locale: string;
+  status: 'active' | 'disabled';
 }
 
 export interface CreateContentProjectRequest {
@@ -84,6 +114,7 @@ export interface UpdateContentLinkRequest extends CreateContentLinkRequest {}
 
 export interface CreateContentNoteRequest {
   category: string;
+  categoryId: number;
   content: string;
   coverImage?: string;
   createdAt?: string;
@@ -96,9 +127,32 @@ export interface CreateContentNoteRequest {
   seoTitle?: string;
   slug: string;
   status: ContentNoteStatus;
+  tagIds: number[];
   tags: string[];
   title: string;
   updatedAt?: string;
 }
 
 export interface UpdateContentNoteRequest extends CreateContentNoteRequest {}
+
+export interface CreateContentCategoryRequest {
+  parentId?: number;
+  slug: string;
+  name: string;
+  description?: string;
+  locale: string;
+  displayRank: number;
+  status: 'active' | 'disabled';
+}
+
+export interface UpdateContentCategoryRequest extends CreateContentCategoryRequest {}
+
+export interface CreateContentTagRequest {
+  slug: string;
+  name: string;
+  description?: string;
+  locale: string;
+  status: 'active' | 'disabled';
+}
+
+export interface UpdateContentTagRequest extends CreateContentTagRequest {}

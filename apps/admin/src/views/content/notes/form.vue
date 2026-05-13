@@ -1,7 +1,9 @@
 <script lang="ts" setup>
 import type {
+  ContentCategory,
   ContentNote,
   ContentNoteStatus,
+  ContentTag,
   CreateContentNoteRequest,
 } from '#/api';
 import type { DxFormSchema, DxSchemaFormExpose } from '#/components/common';
@@ -11,19 +13,21 @@ import { useRoute, useRouter } from 'vue-router';
 
 import { Page } from '@vben/common-ui';
 
-import { Button, Card, Space, message } from 'ant-design-vue';
+import { Button, Card, message, Space } from 'ant-design-vue';
 
 import { z } from '#/adapter/form';
 import {
   createContentNote,
+  getContentCategories,
   getContentNote,
+  getContentTags,
   updateContentNote,
 } from '#/api';
 import { DxSchemaForm } from '#/components/common';
 import { $t } from '#/locales';
 
 interface NoteFormValues {
-  category: string;
+  categoryId: number;
   content: string;
   coverImage: string;
   createdAt: string;
@@ -36,7 +40,7 @@ interface NoteFormValues {
   seoTitle: string;
   slug: string;
   status: ContentNoteStatus;
-  tagsText: string;
+  tagIds: number[];
   title: string;
   updatedAt: string;
 }
@@ -48,6 +52,8 @@ const formValues = ref<NoteFormValues>(buildDefaultValues());
 const originalValues = ref<NoteFormValues | null>(null);
 const loading = ref(false);
 const saving = ref(false);
+const categoryOptions = ref<ContentCategory[]>([]);
+const tagOptions = ref<ContentTag[]>([]);
 
 const noteId = computed(() => {
   const value = route.params.id;
@@ -87,9 +93,12 @@ const schema = computed<DxFormSchema[]>(() => [
     fieldName: 'title',
     label: $t('system.content.notes.fields.title'),
     required: true,
-    rules: z.string().trim().min(1, {
-      message: $t('system.content.notes.messages.required'),
-    }),
+    rules: z
+      .string()
+      .trim()
+      .min(1, {
+        message: $t('system.content.notes.messages.required'),
+      }),
   },
   {
     component: 'Input',
@@ -100,9 +109,12 @@ const schema = computed<DxFormSchema[]>(() => [
     fieldName: 'slug',
     label: $t('system.content.notes.fields.slug'),
     required: true,
-    rules: z.string().trim().min(1, {
-      message: $t('system.content.notes.messages.required'),
-    }),
+    rules: z
+      .string()
+      .trim()
+      .min(1, {
+        message: $t('system.content.notes.messages.required'),
+      }),
   },
   {
     component: 'Select',
@@ -152,21 +164,32 @@ const schema = computed<DxFormSchema[]>(() => [
     label: $t('system.content.notes.fields.displayAt'),
   },
   {
-    component: 'Input',
+    component: 'Select',
     componentProps: {
-      allowClear: true,
+      allowClear: false,
+      options: categoryOptions.value.map((item) => ({
+        label: item.name,
+        value: item.id,
+      })),
       placeholder: $t('system.content.notes.fields.categoryPlaceholder'),
     },
-    fieldName: 'category',
+    fieldName: 'categoryId',
     label: $t('system.content.notes.fields.category'),
+    required: true,
+    rules: z.number().int().positive(),
   },
   {
-    component: 'Input',
+    component: 'Select',
     componentProps: {
       allowClear: true,
+      mode: 'multiple',
+      options: tagOptions.value.map((item) => ({
+        label: item.name,
+        value: item.id,
+      })),
       placeholder: $t('system.content.notes.fields.tagsPlaceholder'),
     },
-    fieldName: 'tagsText',
+    fieldName: 'tagIds',
     label: $t('system.content.notes.fields.tags'),
   },
   {
@@ -180,9 +203,12 @@ const schema = computed<DxFormSchema[]>(() => [
     formItemClass: 'col-span-2',
     label: $t('system.content.notes.fields.excerpt'),
     required: true,
-    rules: z.string().trim().min(1, {
-      message: $t('system.content.notes.messages.required'),
-    }),
+    rules: z
+      .string()
+      .trim()
+      .min(1, {
+        message: $t('system.content.notes.messages.required'),
+      }),
   },
   {
     component: 'Textarea',
@@ -195,9 +221,12 @@ const schema = computed<DxFormSchema[]>(() => [
     formItemClass: 'col-span-2',
     label: $t('system.content.notes.fields.content'),
     required: true,
-    rules: z.string().trim().min(1, {
-      message: $t('system.content.notes.messages.required'),
-    }),
+    rules: z
+      .string()
+      .trim()
+      .min(1, {
+        message: $t('system.content.notes.messages.required'),
+      }),
   },
   {
     component: 'Input',
@@ -267,7 +296,7 @@ const schema = computed<DxFormSchema[]>(() => [
 
 function buildDefaultValues(): NoteFormValues {
   return {
-    category: '',
+    categoryId: 0,
     content: '',
     coverImage: '',
     createdAt: '',
@@ -280,7 +309,7 @@ function buildDefaultValues(): NoteFormValues {
     seoTitle: '',
     slug: '',
     status: 'draft',
-    tagsText: '',
+    tagIds: [],
     title: '',
     updatedAt: '',
   };
@@ -288,7 +317,7 @@ function buildDefaultValues(): NoteFormValues {
 
 function toFormValues(note: ContentNote): NoteFormValues {
   return {
-    category: note.category || '',
+    categoryId: note.categoryId || note.categoryRef?.id || 0,
     content: note.content || '',
     coverImage: note.coverImage || '',
     createdAt: note.createdAt || '',
@@ -301,24 +330,27 @@ function toFormValues(note: ContentNote): NoteFormValues {
     seoTitle: note.seoTitle || '',
     slug: note.slug,
     status: note.status,
-    tagsText: (note.tags || []).join(', '),
+    tagIds: note.tagIds || note.tagRefs?.map((item) => item.id) || [],
     title: note.title,
     updatedAt: note.updatedAt || '',
   };
 }
 
-function parseTags(value: string) {
-  const seen = new Set<string>();
-  return value
-    .split(',')
-    .map((tag) => tag.trim())
-    .filter((tag) => {
-      if (!tag || seen.has(tag)) {
-        return false;
-      }
-      seen.add(tag);
-      return true;
-    });
+function resolveCategoryName(categoryId: number) {
+  return (
+    categoryOptions.value.find((item) => item.id === categoryId)?.name || ''
+  );
+}
+
+function resolveTagNames(tagIds: number[]) {
+  const names = new Set<string>();
+  for (const id of tagIds) {
+    const name = tagOptions.value.find((item) => item.id === id)?.name;
+    if (name) {
+      names.add(name);
+    }
+  }
+  return [...names];
 }
 
 function optionalDate(value: string | undefined) {
@@ -334,12 +366,15 @@ function changedDate(
   if (!isEditing.value) {
     return value;
   }
-  return value !== optionalDate(originalValues.value?.[field]) ? value : undefined;
+  return value === optionalDate(originalValues.value?.[field])
+    ? undefined
+    : value;
 }
 
 function buildPayload(values: NoteFormValues): CreateContentNoteRequest {
   const payload: CreateContentNoteRequest = {
-    category: values.category?.trim() || '',
+    category: resolveCategoryName(values.categoryId),
+    categoryId: values.categoryId,
     content: values.content.trim(),
     coverImage: values.coverImage?.trim() || '',
     excerpt: values.excerpt.trim(),
@@ -349,7 +384,8 @@ function buildPayload(values: NoteFormValues): CreateContentNoteRequest {
     seoTitle: values.seoTitle?.trim() || '',
     slug: values.slug.trim(),
     status: values.status || 'draft',
-    tags: parseTags(values.tagsText || ''),
+    tagIds: [...new Set((values.tagIds || []).filter((id) => Number(id) > 0))],
+    tags: resolveTagNames(values.tagIds || []),
     title: values.title.trim(),
   };
   const publishedAt = changedDate(values, 'publishedAt');
@@ -378,6 +414,15 @@ async function loadNote() {
   } finally {
     loading.value = false;
   }
+}
+
+async function loadTaxonomies() {
+  const [categories, tags] = await Promise.all([
+    getContentCategories(),
+    getContentTags(),
+  ]);
+  categoryOptions.value = categories.items || [];
+  tagOptions.value = tags.items || [];
 }
 
 async function saveNote() {
@@ -411,7 +456,7 @@ function goBack() {
 }
 
 onMounted(() => {
-  void loadNote();
+  void loadTaxonomies().then(loadNote);
 });
 </script>
 
