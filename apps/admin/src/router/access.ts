@@ -74,6 +74,68 @@ function ensureDictionaryItemRoute(
   });
 }
 
+function ensureContentNoteEditorRoutes(
+  routes: RouteRecordStringComponent[] | null | undefined,
+): RouteRecordStringComponent[] {
+  if (!routes) return [];
+
+  return routes.map((route) => {
+    if (route.name === 'Content') {
+      const children = route.children ? [...route.children] : [];
+      const hasCreate = children.some(
+        (child) => child.name === 'ContentNoteCreate',
+      );
+      const hasEdit = children.some(
+        (child) => child.name === 'ContentNoteEdit',
+      );
+
+      if (!hasCreate) {
+        children.push({
+          component: '/content/notes/form',
+          meta: {
+            activePath: '/content/notes',
+            authority: [SYSTEM_PERMISSION_CODES.contentNoteCreate],
+            hideInMenu: true,
+            title: '新建笔记',
+            titleI18n: {
+              'en-US': 'New Note',
+              'zh-CN': '新建笔记',
+            },
+          },
+          name: 'ContentNoteCreate',
+          path: '/content/notes/create',
+        });
+      }
+
+      if (!hasEdit) {
+        children.push({
+          component: '/content/notes/form',
+          meta: {
+            activePath: '/content/notes',
+            authority: [SYSTEM_PERMISSION_CODES.contentNoteUpdate],
+            hideInMenu: true,
+            title: '编辑笔记',
+            titleI18n: {
+              'en-US': 'Edit Note',
+              'zh-CN': '编辑笔记',
+            },
+          },
+          name: 'ContentNoteEdit',
+          path: '/content/notes/:id/edit',
+        });
+      }
+
+      route.children = children;
+    }
+
+    if (route.children?.length) {
+      route.children = ensureContentNoteEditorRoutes(route.children);
+    }
+
+    return route;
+  });
+}
+
 function hasRouteName(
   routes: RouteRecordStringComponent[] | null | undefined,
   routeName: string,
@@ -143,7 +205,7 @@ async function generateAccess(options: GenerateMenuAndRoutesOptions) {
     fetchMenuListAsync: async () => {
       const menus = await getAllMenusApi();
       const augmentedMenus = appendAccountSettingsToSystem(
-        ensureDictionaryItemRoute(menus),
+        ensureContentNoteEditorRoutes(ensureDictionaryItemRoute(menus)),
       );
       if (!hasRouteName(augmentedMenus, 'AccountSettings')) {
         throw new Error('系统菜单缺少账号设置挂载点，请检查后端 /meta/menus 返回值');

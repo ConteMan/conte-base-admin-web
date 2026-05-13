@@ -80,6 +80,15 @@ function getAdminEnv(mode: string) {
   return loadEnv(mode, process.cwd(), '') as AdminEnv;
 }
 
+function getDevPort(env: AdminEnv) {
+  const rawPort = env.VITE_DEV_PORT || process.env.VITE_DEV_PORT || '5175';
+  const port = Number.parseInt(rawPort, 10);
+  if (!Number.isInteger(port) || port <= 0 || port > 65_535) {
+    throw new Error(`invalid VITE_DEV_PORT: ${rawPort}`);
+  }
+  return port;
+}
+
 // any 类型兜底
 const config: any = defineConfig(async (configEnv): Promise<any> => {
   const mode = configEnv?.mode ?? 'development';
@@ -101,6 +110,8 @@ const config: any = defineConfig(async (configEnv): Promise<any> => {
       },
       plugins,
       server: {
+        port: getDevPort(env),
+        strictPort: true,
         proxy: {
           '/api': {
             changeOrigin: true,

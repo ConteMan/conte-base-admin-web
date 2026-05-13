@@ -2,13 +2,16 @@ import { requestClient } from '#/api/request';
 
 import type {
   ContentNow,
+  ContentNote,
   ContentProfile,
   ContentProject,
   ContentLink,
   ContentSiteSettings,
+  CreateContentNoteRequest,
   CreateContentProjectRequest,
   CreateContentLinkRequest,
   UpdateContentNowRequest,
+  UpdateContentNoteRequest,
   UpdateContentProfileRequest,
   UpdateContentProjectRequest,
   UpdateContentLinkRequest,
@@ -79,15 +82,42 @@ export async function deleteContentLink(id: number) {
   return requestClient.delete(`/content/links/${id}`);
 }
 
+export async function getContentNotes() {
+  return requestClient.get<{ items: ContentNote[] }>('/content/notes');
+}
+
+export async function getContentNote(id: number | string) {
+  return requestClient.get<ContentNote>(`/content/notes/${id}`);
+}
+
+export async function createContentNote(data: CreateContentNoteRequest) {
+  return requestClient.post<{ id: number }>('/content/notes', data);
+}
+
+export async function updateContentNote(
+  id: number | string,
+  data: UpdateContentNoteRequest,
+) {
+  return requestClient.put(`/content/notes/${id}`, data);
+}
+
+export async function deleteContentNote(id: number) {
+  return requestClient.delete(`/content/notes/${id}`);
+}
+
 export type {
   ContentNow,
+  ContentNote,
+  ContentNoteStatus,
   ContentProfile,
   ContentProject,
   ContentLink,
   ContentSiteSettings,
+  CreateContentNoteRequest,
   CreateContentProjectRequest,
   CreateContentLinkRequest,
   UpdateContentNowRequest,
+  UpdateContentNoteRequest,
   UpdateContentProfileRequest,
   UpdateContentProjectRequest,
   UpdateContentLinkRequest,

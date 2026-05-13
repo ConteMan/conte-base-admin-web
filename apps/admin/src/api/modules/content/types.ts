@@ -39,6 +39,28 @@ export interface ContentLink {
   openInNewTab: boolean;
 }
 
+export type ContentNoteStatus = 'draft' | 'offline' | 'published';
+
+export interface ContentNote {
+  category: string;
+  content: string;
+  coverImage: string;
+  createdAt: null | string;
+  displayAt: null | string;
+  excerpt: string;
+  featured: boolean;
+  id: number;
+  locale: string;
+  publishedAt: null | string;
+  seoDescription: string;
+  seoTitle: string;
+  slug: string;
+  status: ContentNoteStatus;
+  tags: string[];
+  title: string;
+  updatedAt: null | string;
+}
+
 export interface CreateContentProjectRequest {
   slug: string;
   name: string;
@@ -59,3 +81,24 @@ export interface CreateContentLinkRequest {
 }
 
 export interface UpdateContentLinkRequest extends CreateContentLinkRequest {}
+
+export interface CreateContentNoteRequest {
+  category: string;
+  content: string;
+  coverImage?: string;
+  createdAt?: string;
+  displayAt?: string;
+  excerpt: string;
+  featured: boolean;
+  locale: string;
+  publishedAt?: string;
+  seoDescription?: string;
+  seoTitle?: string;
+  slug: string;
+  status: ContentNoteStatus;
+  tags: string[];
+  title: string;
+  updatedAt?: string;
+}
+
+export interface UpdateContentNoteRequest extends CreateContentNoteRequest {}

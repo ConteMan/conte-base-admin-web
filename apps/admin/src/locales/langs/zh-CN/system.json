@@ -775,6 +775,68 @@
         "updateSuccess": "项目更新成功"
       }
     },
+    "notes": {
+      "title": "笔记管理",
+      "description": "维护公开站笔记内容，支持草稿、发布、下线与基础 SEO 信息。",
+      "actions": {
+        "create": "新建笔记",
+        "edit": "编辑笔记",
+        "delete": "删除笔记",
+        "cancel": "返回列表"
+      },
+      "filters": {
+        "keywordLabel": "关键词",
+        "keyword": "搜索标题、标识或摘要",
+        "status": "筛选状态"
+      },
+      "formDescription": "维护笔记基础信息、正文内容、发布状态与 SEO 信息。",
+      "fieldHelp": {
+        "publishedAt": "发布生命周期时间。发布状态下留空时，后端会自动使用当前时间。",
+        "displayAt": "公开站展示与排序使用的时间。留空时默认使用发布时间，其次使用创建时间。",
+        "createdAt": "创建时间默认自动生成，仅在补录或修正历史内容时手动设置。",
+        "updatedAt": "更新时间默认随保存自动更新，仅在补录或修正历史内容时手动设置。"
+      },
+      "status": {
+        "draft": "草稿",
+        "published": "已发布",
+        "offline": "已下线"
+      },
+      "fields": {
+        "actions": "操作",
+        "category": "分类",
+        "categoryPlaceholder": "请输入分类",
+        "content": "正文",
+        "contentPlaceholder": "请输入正文内容",
+        "coverImage": "封面图",
+        "coverImagePlaceholder": "请输入封面图 URL",
+        "createdAt": "创建时间",
+        "displayAt": "展示时间",
+        "excerpt": "摘要",
+        "excerptPlaceholder": "请输入摘要",
+        "featured": "精选",
+        "locale": "语言",
+        "publishedAt": "发布时间",
+        "seoDescription": "SEO 描述",
+        "seoDescriptionPlaceholder": "请输入 SEO 描述",
+        "seoTitle": "SEO 标题",
+        "seoTitlePlaceholder": "请输入 SEO 标题",
+        "slug": "笔记标识",
+        "slugPlaceholder": "例如：contebase-roadmap",
+        "status": "状态",
+        "tags": "标签",
+        "tagsPlaceholder": "使用英文逗号分隔，例如：Product, ConteBase",
+        "title": "标题",
+        "titlePlaceholder": "请输入标题",
+        "updatedAt": "更新时间"
+      },
+      "messages": {
+        "confirmDelete": "确认删除该笔记？",
+        "createSuccess": "笔记创建成功",
+        "deleteSuccess": "笔记删除成功",
+        "required": "请填写标题、标识、摘要和正文。",
+        "updateSuccess": "笔记更新成功"
+      }
+    },
     "links": {
       "title": "链接管理",
       "description": "维护公开站链接列表，支持增删改与展示策略控制。",
