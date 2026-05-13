@@ -25,13 +25,13 @@ cp .env.example .env.production
 pnpm dev
 ```
 
-服务启动后访问 `http://localhost:5173`，使用 ConteBase 管理端账号登录。
+服务启动后默认访问 `http://localhost:5175`，使用 ConteBase 管理端账号登录。可在 `apps/admin/.env.development` 中通过 `VITE_DEV_PORT` 覆盖本地开发端口。
 
 ## 终端协作与可观测入口
 
 - 首选启动方式：在 `apps/admin/` 下执行 `pnpm dev`
 - 首选观察面：当前终端 stdout / stderr
-- 默认访问地址：`http://localhost:5173`
+- 默认访问地址：`http://localhost:5175`
 - 推荐验证命令：`pnpm typecheck`
 - 页面联调命令：`pnpm test:e2e`
 - 如 dev server 不在当前协作终端，建议保留稳定日志文件：
@@ -51,7 +51,7 @@ pnpm dev 2>&1 | tee ../../tmp/dev-logs/admin-web.dev.log
 
 | 命令 | 说明 |
 | :--- | :--- |
-| `pnpm dev` | 启动本地开发服务器 |
+| `pnpm dev` | 启动本地开发服务器，默认端口 `5175`，可通过 `VITE_DEV_PORT` 覆盖 |
 | `pnpm build` | 执行生产构建（会自动预构建 workspace 依赖，依赖 `apps/admin/.env.production`） |
 | `pnpm env:check:example` | 校验 `.env.example` 是否覆盖代码里使用的环境变量 |
 | `pnpm test:e2e` | 执行 Playwright 页面联调测试，默认使用独立端口 `5175` |

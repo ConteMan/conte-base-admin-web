@@ -23,6 +23,7 @@ const componentMap: Record<string, string> = {
   adminEnumRegistry: '/system/enum-registry/index',
   adminLinks: '/content/links/index',
   adminMenuManage: '/system/menu/index',
+  adminNotes: '/content/notes/index',
   adminNow: '/content/now/index',
   adminPermissions: '/system/menu/index',
   adminProfile: '/content/profile/index',

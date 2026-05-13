@@ -140,6 +140,21 @@ test('登录后加载后台菜单', async ({ page }) => {
   await expect(sideMenu.getByText('枚举管理')).toBeVisible();
 });
 
+test('笔记管理页可进入并显示文章管理操作', async ({ page }) => {
+  await loginAsAdmin(page);
+  await page.goto('/content/notes');
+
+  await expect(page).toHaveURL(/\/content\/notes/);
+  await expect(page.getByText('即将推出')).toHaveCount(0);
+  await expect(page.locator('[id="__vben_main_content"]').getByText('笔记管理')).toBeVisible();
+  await expect(page.getByRole('button', { name: /搜\s*索/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: '新建笔记' })).toBeVisible();
+  await page.getByRole('button', { name: '新建笔记' }).click();
+  await expect(page).toHaveURL(/\/content\/notes\/create/);
+  await expect(page.locator('[id="__vben_main_content"]').getByText('新建笔记')).toBeVisible();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+});
+
 test('账号设置页保留系统菜单上下文', async ({ page }) => {
   await loginAsAdmin(page);
   await page.goto('/account/settings');
