@@ -47,6 +47,7 @@ export interface ContentNote {
   categoryRef?: TaxonomyReference;
   content: string;
   coverImage: string;
+  coverAssetId: number;
   createdAt: null | string;
   displayAt: null | string;
   excerpt: string;
@@ -117,6 +118,7 @@ export interface CreateContentNoteRequest {
   categoryId: number;
   content: string;
   coverImage?: string;
+  coverAssetId?: number;
   createdAt?: string;
   displayAt?: string;
   excerpt: string;
@@ -156,3 +158,55 @@ export interface CreateContentTagRequest {
 }
 
 export interface UpdateContentTagRequest extends CreateContentTagRequest {}
+
+export type AssetStatus = 'deleted' | 'failed' | 'ready' | 'uploading';
+
+export interface ContentAsset {
+  alt: string;
+  bucket: string;
+  caption: string;
+  createdAt: string;
+  createdBy: number;
+  deletedAt?: null | string;
+  height?: number;
+  id: number;
+  mimeType: string;
+  objectKey: string;
+  originalFilename: string;
+  publicUrl: string;
+  readyAt?: null | string;
+  sha256: string;
+  sizeBytes: number;
+  status: AssetStatus;
+  updatedAt: string;
+  width?: number;
+  etag: string;
+}
+
+export interface CreateAssetUploadIntentRequest {
+  mimeType: string;
+  originalFilename: string;
+  sha256?: string;
+  sizeBytes: number;
+}
+
+export interface CreateAssetUploadIntentResponse {
+  asset: ContentAsset;
+  assetId: number;
+  bucket: string;
+  expiresIn: number;
+  headers: Record<string, string>;
+  objectKey: string;
+  publicUrl: string;
+  uploadUrl: string;
+}
+
+export interface CompleteAssetUploadRequest {
+  height?: number;
+  width?: number;
+}
+
+export interface UpdateAssetRequest {
+  alt: string;
+  caption: string;
+}

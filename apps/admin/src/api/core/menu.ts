@@ -22,6 +22,7 @@ const componentMap: Record<string, string> = {
   adminDictionary: '/system/dictionary/index',
   adminEnumRegistry: '/system/enum-registry/index',
   adminLinks: '/content/links/index',
+  adminAssets: '/content/assets/index',
   adminNoteCategories: '/content/categories/index',
   adminMenuManage: '/system/menu/index',
   adminNotes: '/content/notes/index',
