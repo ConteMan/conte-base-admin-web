@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import type {
+  ContentAsset,
   ContentCategory,
   ContentNote,
   ContentNoteStatus,
@@ -25,11 +26,13 @@ import {
 } from '#/api';
 import { DxSchemaForm } from '#/components/common';
 import { $t } from '#/locales';
+import AssetPickerModal from '../assets/components/AssetPickerModal.vue';
 
 interface NoteFormValues {
   categoryId: number;
   content: string;
   coverImage: string;
+  coverAssetId: number;
   createdAt: string;
   displayAt: string;
   excerpt: string;
@@ -54,6 +57,7 @@ const loading = ref(false);
 const saving = ref(false);
 const categoryOptions = ref<ContentCategory[]>([]);
 const tagOptions = ref<ContentTag[]>([]);
+const assetPickerOpen = ref(false);
 
 const noteId = computed(() => {
   const value = route.params.id;
@@ -299,6 +303,7 @@ function buildDefaultValues(): NoteFormValues {
     categoryId: 0,
     content: '',
     coverImage: '',
+    coverAssetId: 0,
     createdAt: '',
     displayAt: '',
     excerpt: '',
@@ -320,6 +325,7 @@ function toFormValues(note: ContentNote): NoteFormValues {
     categoryId: note.categoryId || note.categoryRef?.id || 0,
     content: note.content || '',
     coverImage: note.coverImage || '',
+    coverAssetId: note.coverAssetId || 0,
     createdAt: note.createdAt || '',
     displayAt: note.displayAt || '',
     excerpt: note.excerpt || '',
@@ -377,6 +383,7 @@ function buildPayload(values: NoteFormValues): CreateContentNoteRequest {
     categoryId: values.categoryId,
     content: values.content.trim(),
     coverImage: values.coverImage?.trim() || '',
+    coverAssetId: values.coverAssetId > 0 ? values.coverAssetId : undefined,
     excerpt: values.excerpt.trim(),
     featured: Boolean(values.featured),
     locale: values.locale || 'zh-CN',
@@ -397,6 +404,31 @@ function buildPayload(values: NoteFormValues): CreateContentNoteRequest {
   if (createdAt) payload.createdAt = createdAt;
   if (updatedAt) payload.updatedAt = updatedAt;
   return payload;
+}
+
+async function chooseCoverAsset(asset: ContentAsset) {
+  assetPickerOpen.value = false;
+  formValues.value = {
+    ...formValues.value,
+    coverAssetId: asset.id,
+    coverImage: asset.publicUrl,
+  };
+  await formRef.value?.setValues({
+    coverAssetId: asset.id,
+    coverImage: asset.publicUrl,
+  });
+}
+
+async function clearCoverAsset() {
+  formValues.value = {
+    ...formValues.value,
+    coverAssetId: 0,
+    coverImage: '',
+  };
+  await formRef.value?.setValues({
+    coverAssetId: 0,
+    coverImage: '',
+  });
 }
 
 async function loadNote() {
@@ -433,6 +465,10 @@ async function saveNote() {
   const values = await formRef.value?.getValues<NoteFormValues>();
   if (!values) {
     return;
+  }
+  values.coverAssetId = formValues.value.coverAssetId;
+  if (!values.coverImage?.trim() && formValues.value.coverImage) {
+    values.coverImage = formValues.value.coverImage;
   }
   const payload = buildPayload(values);
 
@@ -473,6 +509,10 @@ onMounted(() => {
         :schema="schema"
         wrapper-class="grid-cols-1 md:grid-cols-2"
       />
+      <div class="mt-4 flex items-center gap-2">
+        <Button @click="assetPickerOpen = true">从媒体库选择封面</Button>
+        <Button @click="clearCoverAsset">清空封面</Button>
+      </div>
       <div class="mt-6 flex justify-end">
         <Space>
           <Button @click="goBack">
@@ -484,5 +524,10 @@ onMounted(() => {
         </Space>
       </div>
     </Card>
+    <AssetPickerModal
+      :open="assetPickerOpen"
+      @cancel="assetPickerOpen = false"
+      @select="chooseCoverAsset"
+    />
   </Page>
 </template>

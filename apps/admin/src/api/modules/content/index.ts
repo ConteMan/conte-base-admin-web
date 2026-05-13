@@ -9,6 +9,10 @@ import type {
   ContentSiteSettings,
   ContentCategory,
   ContentTag,
+  ContentAsset,
+  CreateAssetUploadIntentRequest,
+  CreateAssetUploadIntentResponse,
+  CompleteAssetUploadRequest,
   CreateContentNoteRequest,
   CreateContentCategoryRequest,
   CreateContentTagRequest,
@@ -18,6 +22,7 @@ import type {
   UpdateContentNoteRequest,
   UpdateContentCategoryRequest,
   UpdateContentTagRequest,
+  UpdateAssetRequest,
   UpdateContentProfileRequest,
   UpdateContentProjectRequest,
   UpdateContentLinkRequest,
@@ -146,9 +151,49 @@ export async function deleteContentTag(id: number) {
   return requestClient.delete(`/content/tags/${id}`);
 }
 
+export async function createAssetUploadIntent(
+  data: CreateAssetUploadIntentRequest,
+) {
+  return requestClient.post<CreateAssetUploadIntentResponse>(
+    '/assets/upload-intents',
+    data,
+  );
+}
+
+export async function completeAssetUpload(
+  id: number,
+  data: CompleteAssetUploadRequest,
+) {
+  return requestClient.post<ContentAsset>(`/assets/${id}/complete`, data);
+}
+
+export async function getAssets(params?: {
+  keyword?: string;
+  page?: number;
+  pageSize?: number;
+  status?: string;
+}) {
+  return requestClient.get<{ items: ContentAsset[]; total: number }>('/assets', {
+    params,
+  });
+}
+
+export async function getAsset(id: number) {
+  return requestClient.get<ContentAsset>(`/assets/${id}`);
+}
+
+export async function updateAsset(id: number, data: UpdateAssetRequest) {
+  return requestClient.put<ContentAsset>(`/assets/${id}`, data);
+}
+
+export async function deleteAsset(id: number) {
+  return requestClient.delete(`/assets/${id}`);
+}
+
 export type {
   ContentNow,
   ContentCategory,
+  ContentAsset,
   ContentNote,
   ContentNoteStatus,
   ContentProfile,
@@ -159,12 +204,16 @@ export type {
   CreateContentNoteRequest,
   CreateContentCategoryRequest,
   CreateContentTagRequest,
+  CreateAssetUploadIntentRequest,
+  CreateAssetUploadIntentResponse,
+  CompleteAssetUploadRequest,
   CreateContentProjectRequest,
   CreateContentLinkRequest,
   UpdateContentNowRequest,
   UpdateContentNoteRequest,
   UpdateContentCategoryRequest,
   UpdateContentTagRequest,
+  UpdateAssetRequest,
   UpdateContentProfileRequest,
   UpdateContentProjectRequest,
   UpdateContentLinkRequest,
