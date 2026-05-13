@@ -7,11 +7,17 @@ import type {
   ContentProject,
   ContentLink,
   ContentSiteSettings,
+  ContentCategory,
+  ContentTag,
   CreateContentNoteRequest,
+  CreateContentCategoryRequest,
+  CreateContentTagRequest,
   CreateContentProjectRequest,
   CreateContentLinkRequest,
   UpdateContentNowRequest,
   UpdateContentNoteRequest,
+  UpdateContentCategoryRequest,
+  UpdateContentTagRequest,
   UpdateContentProfileRequest,
   UpdateContentProjectRequest,
   UpdateContentLinkRequest,
@@ -105,19 +111,60 @@ export async function deleteContentNote(id: number) {
   return requestClient.delete(`/content/notes/${id}`);
 }
 
+export async function getContentCategories() {
+  return requestClient.get<{ items: ContentCategory[] }>('/content/categories');
+}
+
+export async function createContentCategory(data: CreateContentCategoryRequest) {
+  return requestClient.post<{ id: number }>('/content/categories', data);
+}
+
+export async function updateContentCategory(
+  id: number,
+  data: UpdateContentCategoryRequest,
+) {
+  return requestClient.put(`/content/categories/${id}`, data);
+}
+
+export async function deleteContentCategory(id: number) {
+  return requestClient.delete(`/content/categories/${id}`);
+}
+
+export async function getContentTags() {
+  return requestClient.get<{ items: ContentTag[] }>('/content/tags');
+}
+
+export async function createContentTag(data: CreateContentTagRequest) {
+  return requestClient.post<{ id: number }>('/content/tags', data);
+}
+
+export async function updateContentTag(id: number, data: UpdateContentTagRequest) {
+  return requestClient.put(`/content/tags/${id}`, data);
+}
+
+export async function deleteContentTag(id: number) {
+  return requestClient.delete(`/content/tags/${id}`);
+}
+
 export type {
   ContentNow,
+  ContentCategory,
   ContentNote,
   ContentNoteStatus,
   ContentProfile,
   ContentProject,
   ContentLink,
   ContentSiteSettings,
+  ContentTag,
   CreateContentNoteRequest,
+  CreateContentCategoryRequest,
+  CreateContentTagRequest,
   CreateContentProjectRequest,
   CreateContentLinkRequest,
   UpdateContentNowRequest,
   UpdateContentNoteRequest,
+  UpdateContentCategoryRequest,
+  UpdateContentTagRequest,
   UpdateContentProfileRequest,
   UpdateContentProjectRequest,
   UpdateContentLinkRequest,
