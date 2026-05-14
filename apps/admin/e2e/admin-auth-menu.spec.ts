@@ -216,3 +216,44 @@ test('菜单管理创建删除后审计日志显示正确操作类型', async ({
   await page.getByRole('button', { name: /重\s*置/ }).click();
   await expect(page.getByText('删除菜单').first()).toBeVisible();
 });
+
+test('笔记编辑工作台支持正文编辑与发布流程', async ({ page }) => {
+  const uniq = Date.now();
+  const noteTitle = `E2E工作台笔记-${uniq}`;
+  const noteSlug = `e2e-workbench-note-${uniq}`;
+
+  await loginAsAdmin(page);
+  await page.goto('/content/notes/create');
+
+  const workbench = page.locator('[data-test-id="note-editor-workbench"]');
+  const metadata = page.locator('[data-test-id="note-editor-metadata"]');
+
+  await expect(workbench).toBeVisible();
+  await expect(page.getByRole('button', { name: '预览' })).toBeVisible();
+  await expect(page.getByRole('button', { name: '保存草稿' })).toBeVisible();
+  await expect(page.getByRole('button', { name: '发布' })).toBeVisible();
+  await expect(page.getByRole('button', { name: '下线' })).toBeVisible();
+
+  await page.getByPlaceholder('请输入标题').fill(noteTitle);
+  await page.getByPlaceholder('例如：contebase-roadmap').fill(noteSlug);
+
+  const editor = page.locator('.note-rich-editor .ProseMirror');
+  await editor.click();
+  await editor.fill(`这是E2E正文内容-${uniq}`);
+
+  await metadata.getByText('请输入分类').click();
+  await page.locator('.ant-select-item-option').first().click();
+
+  await metadata.getByText('使用英文逗号分隔，例如：Product, ConteBase').click();
+  const tagOptions = page.locator('.ant-select-item-option');
+  if ((await tagOptions.count()) > 0) {
+    await tagOptions.first().click();
+  }
+  await page.keyboard.press('Escape');
+
+  await page.getByPlaceholder('请输入摘要').fill(`摘要-${uniq}`);
+  await page.getByRole('button', { name: '发布' }).click();
+
+  await expect(page.getByText('笔记发布成功')).toBeVisible();
+  await expect(page).toHaveURL(/\/content\/notes(\/index)?$/);
+});

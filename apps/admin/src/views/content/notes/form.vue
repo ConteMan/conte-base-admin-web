@@ -7,16 +7,14 @@ import type {
   ContentTag,
   CreateContentNoteRequest,
 } from '#/api';
-import type { DxFormSchema, DxSchemaFormExpose } from '#/components/common';
 
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import { Page } from '@vben/common-ui';
 
-import { Button, Card, message, Space } from 'ant-design-vue';
+import { Button, Card, DatePicker, Dropdown, Form, Input, Select, Space, Switch, Tag, message } from 'ant-design-vue';
 
-import { z } from '#/adapter/form';
 import {
   createContentNote,
   getContentCategories,
@@ -24,7 +22,6 @@ import {
   getContentTags,
   updateContentNote,
 } from '#/api';
-import { DxSchemaForm } from '#/components/common';
 import { $t } from '#/locales';
 import AssetPickerModal from '../assets/components/AssetPickerModal.vue';
 import NoteRichEditor from './components/NoteRichEditor.vue';
@@ -59,26 +56,46 @@ interface NoteFormValues {
   updatedAt: string;
 }
 
+type MoreActionKey = 'metadata' | 'toggle-advanced';
+type SaveAction = 'default' | 'draft' | 'offline' | 'published';
+
+const DATE_VALUE_FORMAT = 'YYYY-MM-DDTHH:mm:ssZ';
+const PREVIEW_ROUTE_PREFIX = '/notes/';
+
 const route = useRoute();
 const router = useRouter();
-const formRef = ref<DxSchemaFormExpose | null>(null);
+
 const formValues = ref<NoteFormValues>(buildDefaultValues());
 const originalValues = ref<NoteFormValues | null>(null);
+
 const loading = ref(false);
-const saving = ref(false);
+const savingAction = ref<SaveAction | null>(null);
+const showAdvancedSettings = ref(false);
+
 const categoryOptions = ref<ContentCategory[]>([]);
 const tagOptions = ref<ContentTag[]>([]);
+
 const assetPickerOpen = ref(false);
+const assetPickerMode = ref<'content' | 'cover'>('cover');
 const editorRef = ref<NoteRichEditorExpose | null>(null);
+const metadataRef = ref<HTMLElement | null>(null);
+
 const contentHtml = ref('');
 const contentDoc = ref('');
-const assetPickerMode = ref<'content' | 'cover'>('cover');
 
 const noteId = computed(() => {
   const value = route.params.id;
   return Array.isArray(value) ? value[0] : value;
 });
+
 const isEditing = computed(() => Boolean(noteId.value));
+const isSaving = computed(() => savingAction.value !== null);
+
+const pageTitle = computed(() =>
+  isEditing.value
+    ? $t('system.content.notes.actions.edit')
+    : $t('system.content.notes.actions.create'),
+);
 
 const statusOptions = computed(() => [
   { label: $t('system.content.notes.status.draft'), value: 'draft' },
@@ -91,207 +108,35 @@ const localeOptions = [
   { label: 'English', value: 'en-US' },
 ];
 
-const featuredOptions = computed(() => [
-  { label: $t('system.common.trueText'), value: true },
-  { label: $t('system.common.falseText'), value: false },
-]);
+const currentStatus = computed(() => {
+  const map: Record<ContentNoteStatus, { color: string; text: string }> = {
+    draft: {
+      color: 'blue',
+      text: $t('system.content.notes.status.draft'),
+    },
+    offline: {
+      color: 'default',
+      text: $t('system.content.notes.status.offline'),
+    },
+    published: {
+      color: 'green',
+      text: $t('system.content.notes.status.published'),
+    },
+  };
 
-const pageTitle = computed(() =>
-  isEditing.value
-    ? $t('system.content.notes.actions.edit')
-    : $t('system.content.notes.actions.create'),
-);
+  return map[formValues.value.status || 'draft'];
+});
 
-const schema = computed<DxFormSchema[]>(() => [
+const moreActions = computed(() => [
   {
-    component: 'Input',
-    componentProps: {
-      allowClear: true,
-      placeholder: $t('system.content.notes.fields.titlePlaceholder'),
-    },
-    fieldName: 'title',
-    label: $t('system.content.notes.fields.title'),
-    required: true,
-    rules: z
-      .string()
-      .trim()
-      .min(1, {
-        message: $t('system.content.notes.messages.required'),
-      }),
+    key: 'metadata',
+    label: $t('system.content.notes.actions.openMetaPanel'),
   },
   {
-    component: 'Input',
-    componentProps: {
-      allowClear: true,
-      placeholder: $t('system.content.notes.fields.slugPlaceholder'),
-    },
-    fieldName: 'slug',
-    label: $t('system.content.notes.fields.slug'),
-    required: true,
-    rules: z
-      .string()
-      .trim()
-      .min(1, {
-        message: $t('system.content.notes.messages.required'),
-      }),
-  },
-  {
-    component: 'Select',
-    componentProps: {
-      options: statusOptions.value,
-      placeholder: $t('system.content.notes.filters.status'),
-    },
-    fieldName: 'status',
-    label: $t('system.content.notes.fields.status'),
-    required: true,
-    rules: z.enum(['draft', 'published', 'offline']),
-  },
-  {
-    component: 'Select',
-    componentProps: {
-      options: localeOptions,
-    },
-    fieldName: 'locale',
-    label: $t('system.content.notes.fields.locale'),
-    required: true,
-    rules: z.string().trim().min(1),
-  },
-  {
-    component: 'DatePicker',
-    componentProps: {
-      allowClear: true,
-      class: 'w-full',
-      format: 'YYYY-MM-DD HH:mm:ss',
-      showTime: true,
-      valueFormat: 'YYYY-MM-DDTHH:mm:ssZ',
-    },
-    fieldName: 'publishedAt',
-    help: $t('system.content.notes.fieldHelp.publishedAt'),
-    label: $t('system.content.notes.fields.publishedAt'),
-  },
-  {
-    component: 'DatePicker',
-    componentProps: {
-      allowClear: true,
-      class: 'w-full',
-      format: 'YYYY-MM-DD HH:mm:ss',
-      showTime: true,
-      valueFormat: 'YYYY-MM-DDTHH:mm:ssZ',
-    },
-    fieldName: 'displayAt',
-    help: $t('system.content.notes.fieldHelp.displayAt'),
-    label: $t('system.content.notes.fields.displayAt'),
-  },
-  {
-    component: 'Select',
-    componentProps: {
-      allowClear: false,
-      options: categoryOptions.value.map((item) => ({
-        label: item.name,
-        value: item.id,
-      })),
-      placeholder: $t('system.content.notes.fields.categoryPlaceholder'),
-    },
-    fieldName: 'categoryId',
-    label: $t('system.content.notes.fields.category'),
-    required: true,
-    rules: z.number().int().positive(),
-  },
-  {
-    component: 'Select',
-    componentProps: {
-      allowClear: true,
-      mode: 'multiple',
-      options: tagOptions.value.map((item) => ({
-        label: item.name,
-        value: item.id,
-      })),
-      placeholder: $t('system.content.notes.fields.tagsPlaceholder'),
-    },
-    fieldName: 'tagIds',
-    label: $t('system.content.notes.fields.tags'),
-  },
-  {
-    component: 'Textarea',
-    componentProps: {
-      allowClear: true,
-      autoSize: { maxRows: 4, minRows: 2 },
-      placeholder: $t('system.content.notes.fields.excerptPlaceholder'),
-    },
-    fieldName: 'excerpt',
-    formItemClass: 'col-span-2',
-    label: $t('system.content.notes.fields.excerpt'),
-    required: true,
-    rules: z
-      .string()
-      .trim()
-      .min(1, {
-        message: $t('system.content.notes.messages.required'),
-      }),
-  },
-  {
-    component: 'Input',
-    componentProps: {
-      allowClear: true,
-      placeholder: $t('system.content.notes.fields.coverImagePlaceholder'),
-    },
-    fieldName: 'coverImage',
-    label: $t('system.content.notes.fields.coverImage'),
-  },
-  {
-    component: 'Select',
-    componentProps: {
-      options: featuredOptions.value,
-    },
-    fieldName: 'featured',
-    label: $t('system.content.notes.fields.featured'),
-  },
-  {
-    component: 'Input',
-    componentProps: {
-      allowClear: true,
-      placeholder: $t('system.content.notes.fields.seoTitlePlaceholder'),
-    },
-    fieldName: 'seoTitle',
-    formItemClass: 'col-span-2',
-    label: $t('system.content.notes.fields.seoTitle'),
-  },
-  {
-    component: 'Textarea',
-    componentProps: {
-      allowClear: true,
-      autoSize: { maxRows: 4, minRows: 2 },
-      placeholder: $t('system.content.notes.fields.seoDescriptionPlaceholder'),
-    },
-    fieldName: 'seoDescription',
-    formItemClass: 'col-span-2',
-    label: $t('system.content.notes.fields.seoDescription'),
-  },
-  {
-    component: 'DatePicker',
-    componentProps: {
-      allowClear: true,
-      class: 'w-full',
-      format: 'YYYY-MM-DD HH:mm:ss',
-      showTime: true,
-      valueFormat: 'YYYY-MM-DDTHH:mm:ssZ',
-    },
-    fieldName: 'createdAt',
-    help: $t('system.content.notes.fieldHelp.createdAt'),
-    label: $t('system.content.notes.fields.createdAt'),
-  },
-  {
-    component: 'DatePicker',
-    componentProps: {
-      allowClear: true,
-      class: 'w-full',
-      format: 'YYYY-MM-DD HH:mm:ss',
-      showTime: true,
-      valueFormat: 'YYYY-MM-DDTHH:mm:ssZ',
-    },
-    fieldName: 'updatedAt',
-    help: $t('system.content.notes.fieldHelp.updatedAt'),
-    label: $t('system.content.notes.fields.updatedAt'),
+    key: 'toggle-advanced',
+    label: showAdvancedSettings.value
+      ? $t('system.content.notes.actions.hideAdvanced')
+      : $t('system.content.notes.actions.showAdvanced'),
   },
 ]);
 
@@ -402,6 +247,7 @@ function buildPayload(values: NoteFormValues): CreateContentNoteRequest {
     tags: resolveTagNames(values.tagIds || []),
     title: values.title.trim(),
   };
+
   const trimmedDoc = contentDoc.value.trim();
   if (trimmedDoc) {
     try {
@@ -410,15 +256,64 @@ function buildPayload(values: NoteFormValues): CreateContentNoteRequest {
       payload.contentDoc = undefined;
     }
   }
+
   const publishedAt = changedDate(values, 'publishedAt');
   const displayAt = changedDate(values, 'displayAt');
   const createdAt = changedDate(values, 'createdAt');
   const updatedAt = changedDate(values, 'updatedAt');
+
   if (publishedAt) payload.publishedAt = publishedAt;
   if (displayAt) payload.displayAt = displayAt;
   if (createdAt) payload.createdAt = createdAt;
   if (updatedAt) payload.updatedAt = updatedAt;
+
   return payload;
+}
+
+function validateRequiredFields() {
+  if (!formValues.value.title.trim()) return false;
+  if (!formValues.value.slug.trim()) return false;
+  if (!formValues.value.excerpt.trim()) return false;
+  if (!contentHtml.value.trim()) return false;
+  if (!formValues.value.categoryId) return false;
+  return true;
+}
+
+function normalizePreviewBaseUrl() {
+  const configured =
+    ((import.meta.env as Record<string, string | undefined>)
+      .VITE_PUBLIC_WEB_BASE_URL || '').trim();
+  const base = configured || globalThis.location.origin;
+  return base.endsWith('/') ? base.slice(0, -1) : base;
+}
+
+function openPreview() {
+  const slug = formValues.value.slug.trim();
+  if (!slug) {
+    message.warning($t('system.content.notes.messages.previewNeedSlug'));
+    return;
+  }
+  const previewUrl = `${normalizePreviewBaseUrl()}${PREVIEW_ROUTE_PREFIX}${encodeURIComponent(slug)}`;
+  globalThis.open(previewUrl, '_blank', 'noopener,noreferrer');
+}
+
+function handleMoreAction(info: { key: number | string }) {
+  const key = info.key as MoreActionKey;
+  if (key === 'metadata') {
+    metadataRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
+  }
+  showAdvancedSettings.value = !showAdvancedSettings.value;
+}
+
+function openAssetPickerForContent() {
+  assetPickerMode.value = 'content';
+  assetPickerOpen.value = true;
+}
+
+function openAssetPickerForCover() {
+  assetPickerMode.value = 'cover';
+  assetPickerOpen.value = true;
 }
 
 async function chooseCoverAsset(asset: ContentAsset) {
@@ -431,38 +326,44 @@ async function chooseCoverAsset(asset: ContentAsset) {
     assetPickerOpen.value = false;
     return;
   }
+
   assetPickerOpen.value = false;
   formValues.value = {
     ...formValues.value,
     coverAssetId: asset.id,
     coverImage: asset.publicUrl,
   };
-  await formRef.value?.setValues({
-    coverAssetId: asset.id,
-    coverImage: asset.publicUrl,
-  });
 }
 
-async function clearCoverAsset() {
+function clearCoverAsset() {
   formValues.value = {
     ...formValues.value,
     coverAssetId: 0,
     coverImage: '',
   };
-  await formRef.value?.setValues({
-    coverAssetId: 0,
-    coverImage: '',
-  });
+}
+
+function syncEditorHTML(value: string) {
+  contentHtml.value = value;
+  formValues.value.content = value;
+  formValues.value.contentHtml = value;
+}
+
+function syncEditorDoc(value: string) {
+  contentDoc.value = value;
+  formValues.value.contentDoc = value;
 }
 
 async function loadNote() {
   if (!isEditing.value || !noteId.value) {
-    formValues.value = buildDefaultValues();
-    contentHtml.value = '';
-    contentDoc.value = '';
+    const defaults = buildDefaultValues();
+    formValues.value = defaults;
+    contentHtml.value = defaults.contentHtml;
+    contentDoc.value = defaults.contentDoc;
     originalValues.value = null;
     return;
   }
+
   loading.value = true;
   try {
     const note = await getContentNote(noteId.value);
@@ -485,37 +386,37 @@ async function loadTaxonomies() {
   tagOptions.value = tags.items || [];
 }
 
-async function saveNote() {
-  const validation = await formRef.value?.validate();
-  if (!validation) {
-    return;
-  }
-  const values = await formRef.value?.getValues<NoteFormValues>();
-  if (!values) {
-    return;
-  }
-  if (!contentHtml.value.trim()) {
+async function saveNote(action: SaveAction) {
+  if (!validateRequiredFields()) {
     message.error($t('system.content.notes.messages.required'));
     return;
   }
-  values.coverAssetId = formValues.value.coverAssetId;
-  if (!values.coverImage?.trim() && formValues.value.coverImage) {
-    values.coverImage = formValues.value.coverImage;
-  }
-  const payload = buildPayload(values);
 
-  saving.value = true;
+  const payload = buildPayload(formValues.value);
+
+  savingAction.value = action;
   try {
     if (isEditing.value && noteId.value) {
       await updateContentNote(noteId.value, payload);
-      message.success($t('system.content.notes.messages.updateSuccess'));
     } else {
       await createContentNote(payload);
+    }
+
+    if (action === 'draft') {
+      message.success($t('system.content.notes.messages.saveDraftSuccess'));
+    } else if (action === 'published') {
+      message.success($t('system.content.notes.messages.publishSuccess'));
+    } else if (action === 'offline') {
+      message.success($t('system.content.notes.messages.offlineSuccess'));
+    } else if (isEditing.value) {
+      message.success($t('system.content.notes.messages.updateSuccess'));
+    } else {
       message.success($t('system.content.notes.messages.createSuccess'));
     }
+
     await router.push({ name: 'adminNotes' });
   } finally {
-    saving.value = false;
+    savingAction.value = null;
   }
 }
 
@@ -523,8 +424,29 @@ function goBack() {
   void router.push({ name: 'adminNotes' });
 }
 
-onMounted(() => {
-  void loadTaxonomies().then(loadNote);
+function saveDraft() {
+  formValues.value.status = 'draft';
+  void saveNote('draft');
+}
+
+function publishNote() {
+  formValues.value.status = 'published';
+  void saveNote('published');
+}
+
+function offlineNote() {
+  formValues.value.status = 'offline';
+  void saveNote('offline');
+}
+
+onMounted(async () => {
+  loading.value = true;
+  try {
+    await loadTaxonomies();
+    await loadNote();
+  } finally {
+    loading.value = false;
+  }
 });
 </script>
 
@@ -534,60 +456,334 @@ onMounted(() => {
     :description="$t('system.content.notes.formDescription')"
     :title="pageTitle"
   >
-    <Card :loading="loading">
-      <DxSchemaForm
-        ref="formRef"
-        :reset-values="formValues"
-        :schema="schema"
-        wrapper-class="grid-cols-1 md:grid-cols-2"
-      />
-      <div class="mt-4 flex items-center gap-2">
-        <Button
-          @click="
-            assetPickerMode = 'content';
-            assetPickerOpen = true;
-          "
-        >
-          从媒体库插入正文图片
-        </Button>
+    <div class="note-editor-workbench" data-test-id="note-editor-workbench">
+      <Card class="note-editor-workbench__header" :bordered="false">
+        <div class="note-editor-workbench__header-inner">
+          <div class="note-editor-workbench__header-left">
+            <Button @click="goBack">{{ $t('system.content.notes.actions.cancel') }}</Button>
+            <div>
+              <div class="note-editor-workbench__headline">{{ pageTitle }}</div>
+              <div class="note-editor-workbench__subline">
+                {{ $t('system.content.notes.formDescription') }}
+              </div>
+            </div>
+            <Tag :color="currentStatus.color">{{ currentStatus.text }}</Tag>
+          </div>
+          <div class="note-editor-workbench__header-actions">
+            <Button @click="openPreview">{{ $t('system.content.notes.actions.preview') }}</Button>
+            <Dropdown :menu="{ items: moreActions, onClick: handleMoreAction }" trigger="click">
+              <Button>{{ $t('system.content.notes.actions.moreSettings') }}</Button>
+            </Dropdown>
+            <Button
+              :loading="savingAction === 'draft'"
+              :disabled="loading || isSaving"
+              @click="saveDraft"
+            >
+              {{ $t('system.content.notes.actions.saveDraft') }}
+            </Button>
+            <Button
+              :loading="savingAction === 'offline'"
+              :disabled="loading || isSaving"
+              @click="offlineNote"
+            >
+              {{ $t('system.content.notes.actions.offline') }}
+            </Button>
+            <Button
+              type="primary"
+              :loading="savingAction === 'published'"
+              :disabled="loading || isSaving"
+              @click="publishNote"
+            >
+              {{ $t('system.content.notes.actions.publish') }}
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      <div class="note-editor-workbench__body">
+        <div class="note-editor-workbench__main">
+          <Card :loading="loading" class="note-editor-workbench__main-card">
+            <Form layout="vertical">
+              <div class="note-editor-workbench__grid-2">
+                <Form.Item :label="$t('system.content.notes.fields.title')" required>
+                  <Input
+                    v-model:value="formValues.title"
+                    :placeholder="$t('system.content.notes.fields.titlePlaceholder')"
+                    allow-clear
+                  />
+                </Form.Item>
+                <Form.Item :label="$t('system.content.notes.fields.slug')" required>
+                  <Input
+                    v-model:value="formValues.slug"
+                    :placeholder="$t('system.content.notes.fields.slugPlaceholder')"
+                    allow-clear
+                  />
+                </Form.Item>
+              </div>
+
+              <Form.Item :label="$t('system.content.notes.fields.content')" required>
+                <Space class="note-editor-workbench__editor-tools" wrap>
+                  <Button @click="openAssetPickerForContent">
+                    {{ $t('system.content.notes.actions.insertImage') }}
+                  </Button>
+                </Space>
+                <NoteRichEditor
+                  ref="editorRef"
+                  :disabled="loading || isSaving"
+                  :doc="contentDoc"
+                  :html="contentHtml"
+                  :placeholder="$t('system.content.notes.fields.contentPlaceholder')"
+                  @update:doc="syncEditorDoc"
+                  @update:html="syncEditorHTML"
+                />
+              </Form.Item>
+            </Form>
+          </Card>
+        </div>
+
+        <div ref="metadataRef" class="note-editor-workbench__side">
+          <Card :loading="loading" class="note-editor-workbench__side-card" data-test-id="note-editor-metadata">
+            <Form layout="vertical">
+              <div class="note-editor-workbench__section-title">
+                {{ $t('system.content.notes.sections.publishMeta') }}
+              </div>
+              <Form.Item :label="$t('system.content.notes.fields.status')" required>
+                <Select
+                  v-model:value="formValues.status"
+                  :options="statusOptions"
+                  :placeholder="$t('system.content.notes.filters.status')"
+                />
+              </Form.Item>
+              <Form.Item :label="$t('system.content.notes.fields.locale')">
+                <Select v-model:value="formValues.locale" :options="localeOptions" />
+              </Form.Item>
+              <Form.Item :label="$t('system.content.notes.fields.featured')">
+                <Switch v-model:checked="formValues.featured" />
+              </Form.Item>
+
+              <div class="note-editor-workbench__section-title">
+                {{ $t('system.content.notes.sections.taxonomy') }}
+              </div>
+              <Form.Item :label="$t('system.content.notes.fields.category')" required>
+                <Select
+                  v-model:value="formValues.categoryId"
+                  :options="categoryOptions.map((item) => ({ label: item.name, value: item.id }))"
+                  :placeholder="$t('system.content.notes.fields.categoryPlaceholder')"
+                  show-search
+                />
+              </Form.Item>
+              <Form.Item :label="$t('system.content.notes.fields.tags')">
+                <Select
+                  v-model:value="formValues.tagIds"
+                  mode="multiple"
+                  :options="tagOptions.map((item) => ({ label: item.name, value: item.id }))"
+                  :placeholder="$t('system.content.notes.fields.tagsPlaceholder')"
+                  show-search
+                />
+              </Form.Item>
+
+              <div class="note-editor-workbench__section-title">
+                {{ $t('system.content.notes.sections.coverSummary') }}
+              </div>
+              <Form.Item :label="$t('system.content.notes.fields.coverImage')">
+                <Input
+                  v-model:value="formValues.coverImage"
+                  :placeholder="$t('system.content.notes.fields.coverImagePlaceholder')"
+                  allow-clear
+                />
+                <Space class="note-editor-workbench__cover-actions" wrap>
+                  <Button @click="openAssetPickerForCover">
+                    {{ $t('system.content.notes.actions.chooseCover') }}
+                  </Button>
+                  <Button danger ghost @click="clearCoverAsset">
+                    {{ $t('system.content.notes.actions.clearCover') }}
+                  </Button>
+                </Space>
+              </Form.Item>
+              <Form.Item :label="$t('system.content.notes.fields.excerpt')" required>
+                <Input.TextArea
+                  v-model:value="formValues.excerpt"
+                  :auto-size="{ minRows: 2, maxRows: 4 }"
+                  :placeholder="$t('system.content.notes.fields.excerptPlaceholder')"
+                  allow-clear
+                />
+              </Form.Item>
+
+              <div class="note-editor-workbench__section-title">
+                {{ $t('system.content.notes.sections.seo') }}
+              </div>
+              <Form.Item :label="$t('system.content.notes.fields.seoTitle')">
+                <Input
+                  v-model:value="formValues.seoTitle"
+                  :placeholder="$t('system.content.notes.fields.seoTitlePlaceholder')"
+                  allow-clear
+                />
+              </Form.Item>
+              <Form.Item :label="$t('system.content.notes.fields.seoDescription')">
+                <Input.TextArea
+                  v-model:value="formValues.seoDescription"
+                  :auto-size="{ minRows: 2, maxRows: 4 }"
+                  :placeholder="$t('system.content.notes.fields.seoDescriptionPlaceholder')"
+                  allow-clear
+                />
+              </Form.Item>
+
+              <div class="note-editor-workbench__section-title">
+                {{ $t('system.content.notes.sections.schedule') }}
+              </div>
+              <Form.Item :label="$t('system.content.notes.fields.publishedAt')">
+                <DatePicker
+                  v-model:value="formValues.publishedAt"
+                  class="w-full"
+                  format="YYYY-MM-DD HH:mm:ss"
+                  :value-format="DATE_VALUE_FORMAT"
+                  show-time
+                  allow-clear
+                />
+              </Form.Item>
+              <Form.Item :label="$t('system.content.notes.fields.displayAt')">
+                <DatePicker
+                  v-model:value="formValues.displayAt"
+                  class="w-full"
+                  format="YYYY-MM-DD HH:mm:ss"
+                  :value-format="DATE_VALUE_FORMAT"
+                  show-time
+                  allow-clear
+                />
+              </Form.Item>
+
+              <template v-if="showAdvancedSettings">
+                <div class="note-editor-workbench__section-title">
+                  {{ $t('system.content.notes.sections.advanced') }}
+                </div>
+                <Form.Item :label="$t('system.content.notes.fields.createdAt')">
+                  <DatePicker
+                    v-model:value="formValues.createdAt"
+                    class="w-full"
+                    format="YYYY-MM-DD HH:mm:ss"
+                    :value-format="DATE_VALUE_FORMAT"
+                    show-time
+                    allow-clear
+                  />
+                </Form.Item>
+                <Form.Item :label="$t('system.content.notes.fields.updatedAt')">
+                  <DatePicker
+                    v-model:value="formValues.updatedAt"
+                    class="w-full"
+                    format="YYYY-MM-DD HH:mm:ss"
+                    :value-format="DATE_VALUE_FORMAT"
+                    show-time
+                    allow-clear
+                  />
+                </Form.Item>
+              </template>
+            </Form>
+          </Card>
+        </div>
       </div>
-      <div class="mt-3 text-sm text-[var(--ant-color-text-secondary)]">
-        {{ $t('system.content.notes.fields.content') }}
-      </div>
-      <div class="mt-2">
-        <NoteRichEditor
-          ref="editorRef"
-          v-model:doc="contentDoc"
-          v-model:html="contentHtml"
-          :placeholder="$t('system.content.notes.fields.contentPlaceholder')"
-        />
-      </div>
-      <div class="mt-4 flex items-center gap-2">
-        <Button
-          @click="
-            assetPickerMode = 'cover';
-            assetPickerOpen = true;
-          "
-        >
-          从媒体库选择封面
-        </Button>
-        <Button @click="clearCoverAsset">清空封面</Button>
-      </div>
-      <div class="mt-6 flex justify-end">
-        <Space>
-          <Button @click="goBack">
-            {{ $t('system.content.notes.actions.cancel') }}
-          </Button>
-          <Button :loading="saving" type="primary" @click="saveNote">
-            {{ $t('system.content.actions.save') }}
-          </Button>
-        </Space>
-      </div>
-    </Card>
+    </div>
+
     <AssetPickerModal
-      :open="assetPickerOpen"
+      v-model:open="assetPickerOpen"
       @cancel="assetPickerOpen = false"
-      @select="chooseCoverAsset"
+      @confirm="chooseCoverAsset"
     />
   </Page>
 </template>
+
+<style scoped>
+.note-editor-workbench {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.note-editor-workbench__header {
+  border-radius: 12px;
+}
+
+.note-editor-workbench__header-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.note-editor-workbench__header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 280px;
+}
+
+.note-editor-workbench__headline {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.note-editor-workbench__subline {
+  color: rgb(100 116 139);
+  font-size: 12px;
+}
+
+.note-editor-workbench__header-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.note-editor-workbench__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  align-items: start;
+  gap: 16px;
+}
+
+.note-editor-workbench__main-card,
+.note-editor-workbench__side-card {
+  border-radius: 12px;
+}
+
+.note-editor-workbench__grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.note-editor-workbench__editor-tools {
+  margin-bottom: 8px;
+}
+
+.note-editor-workbench__section-title {
+  margin: 4px 0 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgb(30 41 59);
+}
+
+.note-editor-workbench__cover-actions {
+  margin-top: 8px;
+}
+
+@media (width <= 1200px) {
+  .note-editor-workbench__body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .note-editor-workbench__side {
+    order: 2;
+  }
+}
+
+@media (width <= 768px) {
+  .note-editor-workbench__grid-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .note-editor-workbench__header-left {
+    min-width: 0;
+    width: 100%;
+  }
+}
+</style>
