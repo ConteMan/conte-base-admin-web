@@ -27,10 +27,21 @@ import {
 import { DxSchemaForm } from '#/components/common';
 import { $t } from '#/locales';
 import AssetPickerModal from '../assets/components/AssetPickerModal.vue';
+import NoteRichEditor from './components/NoteRichEditor.vue';
+
+interface NoteRichEditorExpose {
+  insertAssetImage: (params: {
+    alt?: string;
+    caption?: string;
+    src: string;
+  }) => void;
+}
 
 interface NoteFormValues {
   categoryId: number;
   content: string;
+  contentDoc: string;
+  contentHtml: string;
   coverImage: string;
   coverAssetId: number;
   createdAt: string;
@@ -58,6 +69,10 @@ const saving = ref(false);
 const categoryOptions = ref<ContentCategory[]>([]);
 const tagOptions = ref<ContentTag[]>([]);
 const assetPickerOpen = ref(false);
+const editorRef = ref<NoteRichEditorExpose | null>(null);
+const contentHtml = ref('');
+const contentDoc = ref('');
+const assetPickerMode = ref<'content' | 'cover'>('cover');
 
 const noteId = computed(() => {
   const value = route.params.id;
@@ -215,24 +230,6 @@ const schema = computed<DxFormSchema[]>(() => [
       }),
   },
   {
-    component: 'Textarea',
-    componentProps: {
-      allowClear: true,
-      autoSize: { maxRows: 18, minRows: 10 },
-      placeholder: $t('system.content.notes.fields.contentPlaceholder'),
-    },
-    fieldName: 'content',
-    formItemClass: 'col-span-2',
-    label: $t('system.content.notes.fields.content'),
-    required: true,
-    rules: z
-      .string()
-      .trim()
-      .min(1, {
-        message: $t('system.content.notes.messages.required'),
-      }),
-  },
-  {
     component: 'Input',
     componentProps: {
       allowClear: true,
@@ -302,6 +299,8 @@ function buildDefaultValues(): NoteFormValues {
   return {
     categoryId: 0,
     content: '',
+    contentDoc: '',
+    contentHtml: '',
     coverImage: '',
     coverAssetId: 0,
     createdAt: '',
@@ -321,9 +320,15 @@ function buildDefaultValues(): NoteFormValues {
 }
 
 function toFormValues(note: ContentNote): NoteFormValues {
+  const nextContentHtml = note.contentHtml || note.content || '';
+  const nextContentDoc = note.contentDoc
+    ? JSON.stringify(note.contentDoc)
+    : '';
   return {
     categoryId: note.categoryId || note.categoryRef?.id || 0,
-    content: note.content || '',
+    content: nextContentHtml,
+    contentDoc: nextContentDoc,
+    contentHtml: nextContentHtml,
     coverImage: note.coverImage || '',
     coverAssetId: note.coverAssetId || 0,
     createdAt: note.createdAt || '',
@@ -378,10 +383,12 @@ function changedDate(
 }
 
 function buildPayload(values: NoteFormValues): CreateContentNoteRequest {
+  const trimmedHtml = contentHtml.value.trim();
   const payload: CreateContentNoteRequest = {
     category: resolveCategoryName(values.categoryId),
     categoryId: values.categoryId,
-    content: values.content.trim(),
+    content: trimmedHtml,
+    contentHtml: trimmedHtml,
     coverImage: values.coverImage?.trim() || '',
     coverAssetId: values.coverAssetId > 0 ? values.coverAssetId : undefined,
     excerpt: values.excerpt.trim(),
@@ -395,6 +402,14 @@ function buildPayload(values: NoteFormValues): CreateContentNoteRequest {
     tags: resolveTagNames(values.tagIds || []),
     title: values.title.trim(),
   };
+  const trimmedDoc = contentDoc.value.trim();
+  if (trimmedDoc) {
+    try {
+      payload.contentDoc = JSON.parse(trimmedDoc);
+    } catch {
+      payload.contentDoc = undefined;
+    }
+  }
   const publishedAt = changedDate(values, 'publishedAt');
   const displayAt = changedDate(values, 'displayAt');
   const createdAt = changedDate(values, 'createdAt');
@@ -407,6 +422,15 @@ function buildPayload(values: NoteFormValues): CreateContentNoteRequest {
 }
 
 async function chooseCoverAsset(asset: ContentAsset) {
+  if (assetPickerMode.value === 'content') {
+    editorRef.value?.insertAssetImage({
+      alt: asset.alt,
+      caption: asset.caption,
+      src: asset.publicUrl,
+    });
+    assetPickerOpen.value = false;
+    return;
+  }
   assetPickerOpen.value = false;
   formValues.value = {
     ...formValues.value,
@@ -434,6 +458,8 @@ async function clearCoverAsset() {
 async function loadNote() {
   if (!isEditing.value || !noteId.value) {
     formValues.value = buildDefaultValues();
+    contentHtml.value = '';
+    contentDoc.value = '';
     originalValues.value = null;
     return;
   }
@@ -442,6 +468,8 @@ async function loadNote() {
     const note = await getContentNote(noteId.value);
     const nextValues = toFormValues(note);
     formValues.value = nextValues;
+    contentHtml.value = nextValues.contentHtml;
+    contentDoc.value = nextValues.contentDoc;
     originalValues.value = nextValues;
   } finally {
     loading.value = false;
@@ -464,6 +492,10 @@ async function saveNote() {
   }
   const values = await formRef.value?.getValues<NoteFormValues>();
   if (!values) {
+    return;
+  }
+  if (!contentHtml.value.trim()) {
+    message.error($t('system.content.notes.messages.required'));
     return;
   }
   values.coverAssetId = formValues.value.coverAssetId;
@@ -510,7 +542,35 @@ onMounted(() => {
         wrapper-class="grid-cols-1 md:grid-cols-2"
       />
       <div class="mt-4 flex items-center gap-2">
-        <Button @click="assetPickerOpen = true">从媒体库选择封面</Button>
+        <Button
+          @click="
+            assetPickerMode = 'content';
+            assetPickerOpen = true;
+          "
+        >
+          从媒体库插入正文图片
+        </Button>
+      </div>
+      <div class="mt-3 text-sm text-[var(--ant-color-text-secondary)]">
+        {{ $t('system.content.notes.fields.content') }}
+      </div>
+      <div class="mt-2">
+        <NoteRichEditor
+          ref="editorRef"
+          v-model:doc="contentDoc"
+          v-model:html="contentHtml"
+          :placeholder="$t('system.content.notes.fields.contentPlaceholder')"
+        />
+      </div>
+      <div class="mt-4 flex items-center gap-2">
+        <Button
+          @click="
+            assetPickerMode = 'cover';
+            assetPickerOpen = true;
+          "
+        >
+          从媒体库选择封面
+        </Button>
         <Button @click="clearCoverAsset">清空封面</Button>
       </div>
       <div class="mt-6 flex justify-end">

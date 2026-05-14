@@ -46,6 +46,8 @@ export interface ContentNote {
   categoryId: number;
   categoryRef?: TaxonomyReference;
   content: string;
+  contentDoc?: Record<string, any>;
+  contentHtml?: string;
   coverImage: string;
   coverAssetId: number;
   createdAt: null | string;
@@ -117,6 +119,8 @@ export interface CreateContentNoteRequest {
   category: string;
   categoryId: number;
   content: string;
+  contentDoc?: Record<string, any>;
+  contentHtml?: string;
   coverImage?: string;
   coverAssetId?: number;
   createdAt?: string;
