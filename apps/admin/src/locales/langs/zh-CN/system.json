@@ -782,7 +782,18 @@
         "create": "新建笔记",
         "edit": "编辑笔记",
         "delete": "删除笔记",
-        "cancel": "返回列表"
+        "cancel": "返回列表",
+        "preview": "预览",
+        "saveDraft": "保存草稿",
+        "publish": "发布",
+        "offline": "下线",
+        "moreSettings": "更多设置",
+        "showAdvanced": "显示高级时间设置",
+        "hideAdvanced": "隐藏高级时间设置",
+        "openMetaPanel": "定位到元信息面板",
+        "insertImage": "插入图片",
+        "chooseCover": "从媒体库选择封面",
+        "clearCover": "清空封面"
       },
       "filters": {
         "keywordLabel": "关键词",
@@ -790,6 +801,14 @@
         "status": "筛选状态"
       },
       "formDescription": "维护笔记基础信息、正文内容、发布状态与 SEO 信息。",
+      "sections": {
+        "publishMeta": "发布元信息",
+        "taxonomy": "分类与标签",
+        "coverSummary": "封面与摘要",
+        "seo": "SEO 信息",
+        "schedule": "时间设置",
+        "advanced": "高级时间字段"
+      },
       "fieldHelp": {
         "publishedAt": "发布生命周期时间。发布状态下留空时，后端会自动使用当前时间。",
         "displayAt": "公开站展示与排序使用的时间。留空时默认使用发布时间，其次使用创建时间。",
@@ -834,7 +853,11 @@
         "createSuccess": "笔记创建成功",
         "deleteSuccess": "笔记删除成功",
         "required": "请填写标题、标识、摘要和正文。",
-        "updateSuccess": "笔记更新成功"
+        "updateSuccess": "笔记更新成功",
+        "previewNeedSlug": "请先填写笔记标识后再预览。",
+        "saveDraftSuccess": "草稿保存成功",
+        "publishSuccess": "笔记发布成功",
+        "offlineSuccess": "笔记已下线"
       }
     },
     "links": {

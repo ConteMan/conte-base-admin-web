@@ -782,7 +782,18 @@
         "create": "New Note",
         "edit": "Edit",
         "delete": "Delete",
-        "cancel": "Back"
+        "cancel": "Back",
+        "preview": "Preview",
+        "saveDraft": "Save Draft",
+        "publish": "Publish",
+        "offline": "Take Offline",
+        "moreSettings": "More Settings",
+        "showAdvanced": "Show Advanced Time Fields",
+        "hideAdvanced": "Hide Advanced Time Fields",
+        "openMetaPanel": "Jump to Metadata Panel",
+        "insertImage": "Insert Image",
+        "chooseCover": "Choose Cover from Media",
+        "clearCover": "Clear Cover"
       },
       "filters": {
         "keywordLabel": "Keyword",
@@ -790,6 +801,14 @@
         "status": "Filter status"
       },
       "formDescription": "Maintain note metadata, body content, lifecycle status, and SEO metadata.",
+      "sections": {
+        "publishMeta": "Publish Metadata",
+        "taxonomy": "Category & Tags",
+        "coverSummary": "Cover & Excerpt",
+        "seo": "SEO",
+        "schedule": "Schedule",
+        "advanced": "Advanced Time Fields"
+      },
       "fieldHelp": {
         "publishedAt": "Publication lifecycle time. If left empty while publishing, the backend uses the current time.",
         "displayAt": "Time used for public-site display and sorting. Defaults to published time, then created time.",
@@ -834,7 +853,11 @@
         "createSuccess": "Note created successfully",
         "deleteSuccess": "Note deleted successfully",
         "required": "Please fill title, slug, excerpt, and content.",
-        "updateSuccess": "Note updated successfully"
+        "updateSuccess": "Note updated successfully",
+        "previewNeedSlug": "Please enter a slug before previewing.",
+        "saveDraftSuccess": "Draft saved successfully",
+        "publishSuccess": "Note published successfully",
+        "offlineSuccess": "Note is now offline"
       }
     },
     "links": {
