@@ -152,8 +152,8 @@
     "createFollowupDescription": "新用户首次登录默认只需要账号密码。建议登录后前往账号设置手动开启 2FA。",
     "totpProvisionTitle": "请保存 2FA 重置信息",
     "totpProvisionDescription": "重置 2FA 后，请让该用户尽快使用以下 TOTP Secret 或 otpauth URL 重新绑定验证器。关闭后无法再次查看，只能再次重置。",
-  "totpSecretLabel": "TOTP Secret",
-  "otpAuthUrlLabel": "otpauth URL",
+    "totpSecretLabel": "TOTP Secret",
+    "otpAuthUrlLabel": "otpauth URL",
     "updateSuccess": "用户信息更新成功",
     "edit": "编辑",
     "delete": "删除",
@@ -768,11 +768,21 @@
         "summary": "项目简介",
         "summaryPlaceholder": "请输入项目简介"
       },
+      "filters": {
+        "keyword": "搜索项目名称、标识或简介",
+        "keywordLabel": "关键词",
+        "visible": "筛选可见状态"
+      },
       "messages": {
         "confirmDelete": "确认删除该项目？",
         "createSuccess": "项目创建成功",
         "deleteSuccess": "项目删除成功",
         "updateSuccess": "项目更新成功"
+      },
+      "validation": {
+        "nameRequired": "请输入项目名称",
+        "slugRequired": "请输入项目标识",
+        "summaryRequired": "请输入项目简介"
       }
     },
     "notes": {
@@ -887,11 +897,117 @@
         "url": "链接地址",
         "urlPlaceholder": "请输入链接地址"
       },
+      "filters": {
+        "keyword": "搜索链接名称或地址",
+        "keywordLabel": "关键词",
+        "visible": "筛选可见状态"
+      },
       "messages": {
         "confirmDelete": "确认删除该链接？",
         "createSuccess": "链接创建成功",
         "deleteSuccess": "链接删除成功",
         "updateSuccess": "链接更新成功"
+      },
+      "validation": {
+        "labelRequired": "请输入链接名称",
+        "urlRequired": "请输入链接地址"
+      }
+    },
+    "taxonomy": {
+      "categoriesTitle": "分类管理",
+      "categoriesDescription": "维护笔记分类层级、语言与启用状态。",
+      "tagsTitle": "标签管理",
+      "tagsDescription": "维护笔记标签名称、语言与启用状态。",
+      "actions": {
+        "createCategory": "新建分类",
+        "editCategory": "编辑分类",
+        "createTag": "新建标签",
+        "editTag": "编辑标签",
+        "edit": "编辑",
+        "delete": "删除"
+      },
+      "fields": {
+        "actions": "操作",
+        "description": "描述",
+        "descriptionPlaceholder": "请输入描述",
+        "displayRank": "排序值",
+        "locale": "语言",
+        "name": "名称",
+        "namePlaceholder": "请输入名称",
+        "parent": "上级分类",
+        "parentPlaceholder": "请选择上级分类",
+        "slug": "标识",
+        "slugPlaceholder": "请输入标识",
+        "status": "状态"
+      },
+      "filters": {
+        "keyword": "搜索名称、标识或描述",
+        "keywordLabel": "关键词"
+      },
+      "messages": {
+        "categoryCreateSuccess": "分类创建成功",
+        "categoryUpdateSuccess": "分类更新成功",
+        "categoryDeleteSuccess": "分类删除成功",
+        "confirmDeleteCategory": "确认删除该分类？",
+        "tagCreateSuccess": "标签创建成功",
+        "tagUpdateSuccess": "标签更新成功",
+        "tagDeleteSuccess": "标签删除成功",
+        "confirmDeleteTag": "确认删除该标签？"
+      },
+      "status": {
+        "active": "启用",
+        "disabled": "停用"
+      },
+      "validation": {
+        "nameRequired": "请输入名称",
+        "slugRequired": "请输入标识"
+      }
+    },
+    "assets": {
+      "title": "媒体资源",
+      "description": "管理公开站图片与文件资源，支持上传、预览与基础元信息维护。",
+      "actions": {
+        "upload": "上传资源",
+        "edit": "编辑",
+        "delete": "删除",
+        "copyUrl": "复制地址"
+      },
+      "fields": {
+        "actions": "操作",
+        "alt": "替代文本",
+        "altPlaceholder": "请输入替代文本",
+        "caption": "说明",
+        "captionPlaceholder": "请输入说明",
+        "mimeType": "MIME 类型",
+        "originalFilename": "文件名",
+        "preview": "预览",
+        "publicUrl": "公开地址",
+        "sizeBytes": "大小",
+        "status": "状态",
+        "type": "类型",
+        "updatedAt": "更新时间"
+      },
+      "filters": {
+        "keyword": "搜索文件名、地址或说明",
+        "keywordLabel": "关键词"
+      },
+      "messages": {
+        "confirmDelete": "确认删除该资源？",
+        "copySuccess": "资源地址已复制",
+        "deleteSuccess": "资源删除成功",
+        "updateSuccess": "资源更新成功",
+        "uploadSuccess": "资源上传成功"
+      },
+      "status": {
+        "ready": "可用",
+        "uploading": "上传中",
+        "failed": "失败",
+        "deleted": "已删除"
+      },
+      "type": {
+        "all": "全部",
+        "image": "图片",
+        "file": "文件"
       }
     }
   },

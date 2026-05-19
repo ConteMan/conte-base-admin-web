@@ -1,220 +1,417 @@
 <script lang="ts" setup>
 import type { ContentTag } from '#/api';
+import type { DxFormSchema, DxSchemaFormExpose } from '#/components/common';
 
-import { computed, onMounted, ref } from 'vue';
+import { computed, ref } from 'vue';
 
 import { useAccess } from '@vben/access';
 import { Page } from '@vben/common-ui';
 import { useAccessStore } from '@vben/stores';
 
-import {
-  Button,
-  Form,
-  Input,
-  message,
-  Modal,
-  Popconfirm,
-  Select,
-  Space,
-  Table,
-  Tag,
-} from 'ant-design-vue';
+import { Button, message } from 'ant-design-vue';
 
+import { z } from '#/adapter/form';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   createContentTag,
   deleteContentTag,
   getContentTags,
   updateContentTag,
 } from '#/api';
+import {
+  DxActionColumn,
+  DxFormModal,
+  DxMetaTag,
+  DxSchemaForm,
+  DxVxeGrid,
+} from '#/components/common';
 import { SYSTEM_PERMISSION_CODES } from '#/constants';
+import { $t } from '#/locales';
+
+type VbenVxeGridProps = Parameters<typeof useVbenVxeGrid>[0];
 
 interface TagFormValues {
-  description: string;
+  description?: string;
   locale: string;
   name: string;
   slug: string;
   status: 'active' | 'disabled';
 }
 
+interface TagSearchValues {
+  keyword?: string;
+  locale?: string;
+  status?: 'active' | 'disabled';
+}
+
 const accessStore = useAccessStore();
 const { hasAccessByCodes } = useAccess();
-const loading = ref(false);
-const visible = ref(false);
-const saving = ref(false);
-const editing = ref<ContentTag | null>(null);
-const tags = ref<ContentTag[]>([]);
-const formState = ref<TagFormValues>({
-  description: '',
-  locale: 'zh-CN',
-  name: '',
-  slug: '',
-  status: 'active',
-});
+const gridRef = ref<InstanceType<typeof DxVxeGrid>>();
+const formRef = ref<DxSchemaFormExpose | null>(null);
+const formVisible = ref(false);
+const formSaving = ref(false);
+const editingId = ref<null | number>(null);
+const formResetValues = ref<TagFormValues | null>(null);
 
-const canCreate = computed(() =>
-  hasPermission([SYSTEM_PERMISSION_CODES.contentTagCreate]),
-);
-const canUpdate = computed(() =>
-  hasPermission([SYSTEM_PERMISSION_CODES.contentTagUpdate]),
-);
-const canDelete = computed(() =>
-  hasPermission([SYSTEM_PERMISSION_CODES.contentTagDelete]),
-);
-
-const statusOptions = [
-  { label: 'Active', value: 'active' },
-  { label: 'Disabled', value: 'disabled' },
-];
-
-const localeOptions = [
-  { label: '中文', value: 'zh-CN' },
-  { label: 'English', value: 'en-US' },
-];
-
-function hasPermission(codes: string[]) {
+function hasAnyCode(codes: string[]) {
   if (!accessStore.isAccessChecked) {
     return false;
   }
   return hasAccessByCodes(codes);
 }
 
-async function loadData() {
-  loading.value = true;
-  try {
-    const result = await getContentTags();
-    tags.value = result.items || [];
-  } finally {
-    loading.value = false;
-  }
+const canCreate = computed(() =>
+  hasAnyCode([SYSTEM_PERMISSION_CODES.contentTagCreate]),
+);
+const canUpdate = computed(() =>
+  hasAnyCode([SYSTEM_PERMISSION_CODES.contentTagUpdate]),
+);
+const canDelete = computed(() =>
+  hasAnyCode([SYSTEM_PERMISSION_CODES.contentTagDelete]),
+);
+const isEditing = computed(() => editingId.value !== null);
+
+const statusOptions = computed(() => [
+  {
+    badgeStatus: 'success' as const,
+    color: 'green',
+    label: $t('system.content.taxonomy.status.active'),
+    value: 'active',
+  },
+  {
+    badgeStatus: 'default' as const,
+    color: 'default',
+    label: $t('system.content.taxonomy.status.disabled'),
+    value: 'disabled',
+  },
+]);
+
+const localeOptions = computed(() => [
+  { label: '中文', value: 'zh-CN' },
+  { label: 'English', value: 'en-US' },
+]);
+
+const formSchema = computed<DxFormSchema[]>(() => [
+  {
+    component: 'Input',
+    componentProps: {
+      allowClear: true,
+      placeholder: $t('system.content.taxonomy.fields.slugPlaceholder'),
+    },
+    fieldName: 'slug',
+    label: $t('system.content.taxonomy.fields.slug'),
+    required: true,
+    rules: z
+      .string()
+      .trim()
+      .min(1, {
+        message: $t('system.content.taxonomy.validation.slugRequired'),
+      }),
+  },
+  {
+    component: 'Input',
+    componentProps: {
+      allowClear: true,
+      placeholder: $t('system.content.taxonomy.fields.namePlaceholder'),
+    },
+    fieldName: 'name',
+    label: $t('system.content.taxonomy.fields.name'),
+    required: true,
+    rules: z
+      .string()
+      .trim()
+      .min(1, {
+        message: $t('system.content.taxonomy.validation.nameRequired'),
+      }),
+  },
+  {
+    component: 'Select',
+    componentProps: {
+      options: localeOptions.value,
+    },
+    defaultValue: 'zh-CN',
+    fieldName: 'locale',
+    label: $t('system.content.taxonomy.fields.locale'),
+  },
+  {
+    component: 'Select',
+    componentProps: {
+      options: statusOptions.value,
+    },
+    defaultValue: 'active',
+    fieldName: 'status',
+    label: $t('system.content.taxonomy.fields.status'),
+  },
+  {
+    component: 'Textarea',
+    componentProps: {
+      autoSize: { minRows: 3, maxRows: 6 },
+      placeholder: $t('system.content.taxonomy.fields.descriptionPlaceholder'),
+    },
+    fieldName: 'description',
+    label: $t('system.content.taxonomy.fields.description'),
+  },
+]);
+
+function filterTags(items: ContentTag[], values: TagSearchValues = {}) {
+  const keyword = values.keyword?.trim().toLowerCase();
+  return items.filter((item) => {
+    const matchesKeyword =
+      !keyword ||
+      item.name.toLowerCase().includes(keyword) ||
+      item.slug.toLowerCase().includes(keyword) ||
+      item.description.toLowerCase().includes(keyword);
+    const matchesLocale = !values.locale || item.locale === values.locale;
+    const matchesStatus = !values.status || item.status === values.status;
+    return matchesKeyword && matchesLocale && matchesStatus;
+  });
+}
+
+async function reloadGrid() {
+  await gridRef.value?.gridApi?.reload();
 }
 
 function openCreate() {
-  editing.value = null;
-  visible.value = true;
-  formState.value = {
+  editingId.value = null;
+  formResetValues.value = {
     description: '',
     locale: 'zh-CN',
     name: '',
     slug: '',
     status: 'active',
   };
+  formVisible.value = true;
 }
 
 function openEdit(record: ContentTag) {
-  editing.value = record;
-  visible.value = true;
-  formState.value = {
-    description: record.description,
+  editingId.value = record.id;
+  formResetValues.value = {
+    description: record.description || '',
     locale: record.locale || 'zh-CN',
     name: record.name,
     slug: record.slug,
     status: record.status || 'active',
   };
+  formVisible.value = true;
 }
 
-async function submit() {
-  const values = { ...formState.value };
-  if (!values.name.trim() || !values.slug.trim()) {
-    message.error('请先填写名称和 slug');
+function closeForm() {
+  formVisible.value = false;
+  editingId.value = null;
+  formResetValues.value = null;
+}
+
+async function submitForm() {
+  const valid = await formRef.value?.validate();
+  if (!valid) {
     return;
   }
-  saving.value = true;
+  const values = await formRef.value?.getValues<TagFormValues>();
+  if (!values) {
+    return;
+  }
+  formSaving.value = true;
   try {
-    if (editing.value) {
-      await updateContentTag(editing.value.id, values);
-      message.success('标签已更新');
+    const payload = {
+      description: values.description?.trim() || '',
+      locale: values.locale || 'zh-CN',
+      name: values.name.trim(),
+      slug: values.slug.trim(),
+      status: values.status || 'active',
+    };
+    if (editingId.value !== null) {
+      await updateContentTag(editingId.value, payload);
+      message.success($t('system.content.taxonomy.messages.tagUpdateSuccess'));
     } else {
-      await createContentTag(values);
-      message.success('标签已创建');
+      await createContentTag(payload);
+      message.success($t('system.content.taxonomy.messages.tagCreateSuccess'));
     }
-    visible.value = false;
-    await loadData();
+    closeForm();
+    await reloadGrid();
   } finally {
-    saving.value = false;
+    formSaving.value = false;
   }
 }
 
-async function remove(record: ContentTag) {
+async function removeTag(record: ContentTag) {
   await deleteContentTag(record.id);
-  message.success('标签已删除');
-  await loadData();
+  message.success($t('system.content.taxonomy.messages.tagDeleteSuccess'));
+  await reloadGrid();
 }
 
-onMounted(() => {
-  void loadData();
-});
+const gridOptions = computed<VbenVxeGridProps>(() => ({
+  gridOptions: {
+    columns: [
+      {
+        fixed: 'left',
+        title: $t('system.referenceData.columns.seq'),
+        type: 'seq',
+        width: 60,
+      },
+      {
+        field: 'name',
+        fixed: 'left',
+        minWidth: 180,
+        title: $t('system.content.taxonomy.fields.name'),
+      },
+      {
+        field: 'slug',
+        minWidth: 180,
+        title: $t('system.content.taxonomy.fields.slug'),
+      },
+      {
+        field: 'description',
+        minWidth: 240,
+        title: $t('system.content.taxonomy.fields.description'),
+      },
+      {
+        field: 'locale',
+        title: $t('system.content.taxonomy.fields.locale'),
+        width: 120,
+      },
+      {
+        field: 'status',
+        slots: { default: 'status' },
+        title: $t('system.content.taxonomy.fields.status'),
+        width: 120,
+      },
+      {
+        fixed: 'right',
+        slots: { default: 'actions' },
+        title: $t('system.content.taxonomy.fields.actions'),
+        width: 180,
+      },
+    ],
+    height: 'auto',
+    proxyConfig: {
+      ajax: {
+        query: async (_params: unknown, formValues: TagSearchValues) => {
+          const response = await getContentTags();
+          const items = filterTags(response.items || [], formValues || {});
+          return {
+            items,
+            total: items.length,
+          };
+        },
+      },
+      autoLoad: true,
+    },
+    rowConfig: { isHover: true, keyField: 'id' },
+    toolbarConfig: {
+      custom: true,
+      refresh: true,
+      search: true,
+      zoom: true,
+    },
+  },
+  formOptions: {
+    actionWrapperClass: 'ml-auto',
+    commonConfig: {
+      formItemClass: 'mb-0 flex-none',
+      labelClass: 'w-auto',
+    },
+    layout: 'inline',
+    schema: [
+      {
+        component: 'Input',
+        componentProps: {
+          allowClear: true,
+          placeholder: $t('system.content.taxonomy.filters.keyword'),
+        },
+        fieldName: 'keyword',
+        label: $t('system.content.taxonomy.filters.keywordLabel'),
+      },
+      {
+        component: 'Select',
+        componentProps: {
+          allowClear: true,
+          options: localeOptions.value,
+          placeholder: $t('system.content.taxonomy.fields.locale'),
+        },
+        fieldName: 'locale',
+        label: $t('system.content.taxonomy.fields.locale'),
+      },
+      {
+        component: 'Select',
+        componentProps: {
+          allowClear: true,
+          options: statusOptions.value,
+          placeholder: $t('system.content.taxonomy.fields.status'),
+        },
+        fieldName: 'status',
+        label: $t('system.content.taxonomy.fields.status'),
+      },
+    ],
+    showCollapseButton: false,
+    wrapperClass: 'w-full gap-4 flex-row',
+  },
+  separator: false,
+}));
 </script>
 
 <template>
   <Page
     auto-content-height
-    description="维护笔记标签集合与可见状态"
-    title="标签管理"
+    :description="$t('system.content.taxonomy.tagsDescription')"
+    :title="$t('system.content.taxonomy.tagsTitle')"
   >
-    <div class="mb-4 flex justify-end">
-      <Button v-if="canCreate" type="primary" @click="openCreate">
-        新建标签
-      </Button>
-    </div>
+    <DxVxeGrid ref="gridRef" :grid-options="gridOptions">
+      <template #toolbar-actions>
+        <Button v-if="canCreate" type="primary" @click="openCreate">
+          {{ $t('system.content.taxonomy.actions.createTag') }}
+        </Button>
+      </template>
 
-    <Table
-      :data-source="tags"
-      :loading="loading"
-      row-key="id"
-      :pagination="false"
-    >
-      <Table.Column title="名称" data-index="name" key="name" />
-      <Table.Column title="Slug" data-index="slug" key="slug" />
-      <Table.Column title="语言" data-index="locale" key="locale" width="120" />
-      <Table.Column title="状态" key="status" width="120">
-        <template #default="{ record }">
-          <Tag :color="record.status === 'active' ? 'green' : 'default'">
-            {{ record.status }}
-          </Tag>
-        </template>
-      </Table.Column>
-      <Table.Column title="操作" key="actions" width="180">
-        <template #default="{ record }">
-          <Space>
-            <Button v-if="canUpdate" type="link" @click="openEdit(record)">
-              编辑
-            </Button>
-            <Popconfirm
-              v-if="canDelete"
-              title="确认删除该标签？若仍被笔记引用将被拒绝。"
-              @confirm="remove(record)"
-            >
-              <Button danger type="link">删除</Button>
-            </Popconfirm>
-          </Space>
-        </template>
-      </Table.Column>
-    </Table>
+      <template #status="{ row }">
+        <DxMetaTag
+          :options="statusOptions"
+          type="tag"
+          :value="(row as ContentTag).status"
+        />
+      </template>
 
-    <Modal
-      :confirm-loading="saving"
-      :open="visible"
-      :title="editing ? '编辑标签' : '新建标签'"
-      @cancel="visible = false"
-      @ok="submit"
+      <template #actions="{ row }">
+        <DxActionColumn
+          :actions="[
+            {
+              key: 'edit',
+              label: $t('system.content.taxonomy.actions.edit'),
+              hidden: !canUpdate,
+              onClick: () => openEdit(row as ContentTag),
+            },
+            {
+              key: 'delete',
+              label: $t('system.content.taxonomy.actions.delete'),
+              danger: true,
+              hidden: !canDelete,
+              confirmTitle: $t(
+                'system.content.taxonomy.messages.confirmDeleteTag',
+              ),
+              onClick: () => removeTag(row as ContentTag),
+            },
+          ]"
+        />
+      </template>
+    </DxVxeGrid>
+
+    <DxFormModal
+      :open="formVisible"
+      :saving="formSaving"
+      :title="
+        isEditing
+          ? $t('system.content.taxonomy.actions.editTag')
+          : $t('system.content.taxonomy.actions.createTag')
+      "
+      :save-text="$t('system.content.actions.save')"
+      @cancel="closeForm"
+      @ok="submitForm"
+      @update:open="formVisible = $event"
     >
-      <Form :model="formState" layout="vertical">
-        <Form.Item label="名称">
-          <Input v-model:value="formState.name" />
-        </Form.Item>
-        <Form.Item label="Slug">
-          <Input v-model:value="formState.slug" />
-        </Form.Item>
-        <Form.Item label="语言">
-          <Select v-model:value="formState.locale" :options="localeOptions" />
-        </Form.Item>
-        <Form.Item label="状态">
-          <Select v-model:value="formState.status" :options="statusOptions" />
-        </Form.Item>
-        <Form.Item label="描述">
-          <Input.TextArea v-model:value="formState.description" :rows="3" />
-        </Form.Item>
-      </Form>
-    </Modal>
+      <DxSchemaForm
+        ref="formRef"
+        :reset-values="formResetValues"
+        :schema="formSchema"
+      />
+    </DxFormModal>
   </Page>
 </template>
