@@ -80,8 +80,9 @@ function ensureContentNoteEditorRoutes(
   if (!routes) return [];
 
   return routes.map((route) => {
-    if (route.name === 'Content') {
+    if (route.name === 'adminNotes' || route.path === '/notes') {
       const children = route.children ? [...route.children] : [];
+      const hasList = children.some((child) => child.name === 'adminNoteList');
       const hasCreate = children.some(
         (child) => child.name === 'ContentNoteCreate',
       );
@@ -89,11 +90,28 @@ function ensureContentNoteEditorRoutes(
         (child) => child.name === 'ContentNoteEdit',
       );
 
+      if (!hasList) {
+        children.unshift({
+          component: '/content/notes/index',
+          meta: {
+            activePath: '/notes/list',
+            authority: [SYSTEM_PERMISSION_CODES.contentNoteQuery],
+            title: '笔记列表',
+            titleI18n: {
+              'en-US': 'Note List',
+              'zh-CN': '笔记列表',
+            },
+          },
+          name: 'adminNoteList',
+          path: '/notes/list',
+        });
+      }
+
       if (!hasCreate) {
         children.push({
           component: '/content/notes/form',
           meta: {
-            activePath: '/content/notes',
+            activePath: '/notes/list',
             authority: [SYSTEM_PERMISSION_CODES.contentNoteCreate],
             hideInMenu: true,
             title: '新建笔记',
@@ -103,7 +121,7 @@ function ensureContentNoteEditorRoutes(
             },
           },
           name: 'ContentNoteCreate',
-          path: '/content/notes/create',
+          path: '/notes/create',
         });
       }
 
@@ -111,7 +129,7 @@ function ensureContentNoteEditorRoutes(
         children.push({
           component: '/content/notes/form',
           meta: {
-            activePath: '/content/notes',
+            activePath: '/notes/list',
             authority: [SYSTEM_PERMISSION_CODES.contentNoteUpdate],
             hideInMenu: true,
             title: '编辑笔记',
@@ -121,7 +139,7 @@ function ensureContentNoteEditorRoutes(
             },
           },
           name: 'ContentNoteEdit',
-          path: '/content/notes/:id/edit',
+          path: '/notes/:id/edit',
         });
       }
 
@@ -208,7 +226,9 @@ async function generateAccess(options: GenerateMenuAndRoutesOptions) {
         ensureContentNoteEditorRoutes(ensureDictionaryItemRoute(menus)),
       );
       if (!hasRouteName(augmentedMenus, 'AccountSettings')) {
-        throw new Error('系统菜单缺少账号设置挂载点，请检查后端 /meta/menus 返回值');
+        throw new Error(
+          '系统菜单缺少账号设置挂载点，请检查后端 /meta/menus 返回值',
+        );
       }
       // 根据当前 locale 解析 titleI18n → title
       return applyI18nToRoutes(augmentedMenus);
